@@ -38,9 +38,21 @@ const separarRemetente = (texto) => {
   return m ? { name: m[1].trim() || 'Feira System', email: m[2].trim() } : { name: 'Feira System', email: String(texto).trim() };
 };
 
+/* "otavio@gmail.com" → "o***@gmail.com": dá para conferir no log sem expor o endereço inteiro */
+const mascararEmail = (email) => String(email).replace(/^(.).*(@.*)$/, '$1***$2');
+
 /* Envia um e-mail pelo meio configurado. Retorna false quando não há
    nenhum configurado (quem chama decide o que registrar no log). */
-const enviarEmail = async ({ para, assunto, html, responderPara }) => {
+const enviarEmail = async (dados) => {
+  const meio = await enviarPorMeioConfigurado(dados);
+  /* ⭐ Registra também o SUCESSO: sem isto, "nada no log" podia ser tanto
+     "enviou" quanto "nem tentou", e não dava para diagnosticar. */
+  if (meio) console.log(`📧 E-mail "${dados.assunto}" aceito pelo ${meio} para ${mascararEmail(dados.para)}`);
+  return Boolean(meio);
+};
+
+/* Devolve o nome do serviço usado ('Mailjet' | 'Brevo' | 'SMTP') ou null se nenhum está configurado */
+const enviarPorMeioConfigurado = async ({ para, assunto, html, responderPara }) => {
   const remetente = process.env.SMTP_FROM || REMETENTE_PADRAO;
 
   if (mailjetConfigurado) {
@@ -66,7 +78,7 @@ const enviarEmail = async ({ para, assunto, html, responderPara }) => {
          ainda não validado no Mailjet (Senders & Domains) */
       throw new Error(`Mailjet respondeu HTTP ${resposta.status}: ${JSON.stringify(corpo).slice(0, 300)}`);
     }
-    return true;
+    return 'Mailjet';
   }
 
   if (brevoConfigurado) {
@@ -87,15 +99,15 @@ const enviarEmail = async ({ para, assunto, html, responderPara }) => {
       /* Erro mais comum: remetente (SMTP_FROM) não verificado no painel do Brevo */
       throw new Error(`Brevo respondeu HTTP ${resposta.status}: ${detalhe.slice(0, 300)}`);
     }
-    return true;
+    return 'Brevo';
   }
 
   if (smtpConfigurado) {
     await transporter.sendMail({ from: remetente, to: para, replyTo: responderPara, subject: assunto, html });
-    return true;
+    return 'SMTP';
   }
 
-  return false;
+  return null;
 };
 
 const sendPasswordResetEmail = async (email, tokenBruto) => {
@@ -115,6 +127,12 @@ const sendPasswordResetEmail = async (email, tokenBruto) => {
   });
 
   if (!enviado) {
+    /* ⭐ Em produção o token NUNCA vai para o log: quem lê os logs do servidor
+       poderia redefinir a senha de qualquer cliente. */
+    if (process.env.NODE_ENV === 'production') {
+      console.error(`❌ E-mail de recuperação para ${email} NÃO enviado: configure MAILJET_API_KEY e MAILJET_SECRET_KEY (ou BREVO_API_KEY / SMTP).`);
+      return;
+    }
     console.log('\n📧 [DEV] Nenhum envio de e-mail configurado (Mailjet, Brevo ou SMTP) — e-mail não enviado de verdade.');
     console.log(`📧 [DEV] Token de recuperação para ${email}: ${tokenBruto}`);
     console.log(`📧 [DEV] Link de redefinição: ${link}\n`);

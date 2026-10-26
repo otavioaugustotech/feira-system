@@ -148,7 +148,10 @@ const solicitarRecuperacao = async (email) => {
   const usuarioRes = await db.query('SELECT id, nome FROM usuarios WHERE email = $1', [email]);
 
   if (usuarioRes.rows.length === 0) {
-    return; /* silenciosamente não faz nada — resposta genérica no controller */
+    /* Resposta genérica para o cliente, mas registra no log (com o e-mail
+       mascarado) para dar para diagnosticar "o e-mail não chegou". */
+    console.log(`📧 Recuperação de senha pedida para e-mail não cadastrado: ${String(email).replace(/^(.).*(@.*)$/, '$1***$2')}`);
+    return;
   }
 
   const usuario = usuarioRes.rows[0];

@@ -30,6 +30,8 @@ services:
         value: "1"
       - key: APP_TIMEZONE
         value: America/Sao_Paulo
+      - key: TZ                # relógio do servidor no horário do Brasil (sem isto as vendas aparecem com 3h a menos)
+        value: America/Sao_Paulo
 
       # Endereços públicos (troque pelo seu domínio)
       - key: FRONTEND_URL

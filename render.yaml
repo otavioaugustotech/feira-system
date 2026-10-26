@@ -59,10 +59,13 @@ services:
 
       # E-mail (recuperação de senha + aviso de leads).
       # O plano free do Render BLOQUEIA SMTP (Gmail); por isso o envio é
-      # pela API do Brevo (brevo.com, grátis até 300/dia). A chave fica só
-      # no painel do Render. SMTP_FROM precisa ser um remetente verificado
-      # no Brevo (Senders, domains & dedicated IPs → Senders).
-      - key: BREVO_API_KEY
+      # pela API do Mailjet (mailjet.com, grátis até 200/dia). As chaves
+      # ficam só no painel do Render (Mailjet → Account settings → API Key
+      # Management). SMTP_FROM precisa ser um remetente validado no Mailjet
+      # (Account settings → Senders & Domains).
+      - key: MAILJET_API_KEY
+        sync: false
+      - key: MAILJET_SECRET_KEY
         sync: false
       - key: SMTP_FROM
         value: "Feira System <otavioac01@gmail.com>"

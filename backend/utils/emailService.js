@@ -2,11 +2,14 @@
    utils/emailService.js — RECONSTRUÍDO (não fazia parte do pacote
    "faltante", mas authService.js importa `sendPasswordResetEmail` daqui).
 
-   ⭐ Dois jeitos de enviar, escolhidos pelo .env:
-   1) BREVO_API_KEY  → API HTTPS do Brevo (brevo.com, grátis até 300/dia).
-      Use este no Render: o plano gratuito do Render BLOQUEIA as portas
+   ⭐ Três jeitos de enviar, escolhidos pelo .env (nesta ordem):
+   1) MAILJET_API_KEY + MAILJET_SECRET_KEY → API HTTPS do Mailjet
+      (mailjet.com, grátis até 200/dia, conta validada por e-mail).
+   2) BREVO_API_KEY → API HTTPS do Brevo (brevo.com, grátis até 300/dia;
+      exige confirmar o celular por SMS).
+      Use 1 ou 2 no Render: o plano gratuito do Render BLOQUEIA as portas
       de e-mail (SMTP 25/465/587) desde set/2025 — o Gmail não sai de lá.
-   2) SMTP_HOST/USER/PASS → SMTP comum (ex.: Gmail com senha de app),
+   3) SMTP_HOST/USER/PASS → SMTP comum (ex.: Gmail com senha de app),
       bom para rodar no seu computador ou num servidor pago.
    Sem nenhum dos dois (desenvolvimento), o e-mail NÃO é enviado — o
    link de recuperação é só impresso no console, para testes manuais.
@@ -16,6 +19,7 @@ const nodemailer = require('nodemailer');
 
 const REMETENTE_PADRAO = '"Feira System" <no-reply@feirasystem.com>';
 
+const mailjetConfigurado = Boolean(process.env.MAILJET_API_KEY && process.env.MAILJET_SECRET_KEY);
 const brevoConfigurado = Boolean(process.env.BREVO_API_KEY);
 const smtpConfigurado = process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS;
 
@@ -38,6 +42,32 @@ const separarRemetente = (texto) => {
    nenhum configurado (quem chama decide o que registrar no log). */
 const enviarEmail = async ({ para, assunto, html, responderPara }) => {
   const remetente = process.env.SMTP_FROM || REMETENTE_PADRAO;
+
+  if (mailjetConfigurado) {
+    const { name, email } = separarRemetente(remetente);
+    const credenciais = Buffer.from(`${process.env.MAILJET_API_KEY}:${process.env.MAILJET_SECRET_KEY}`).toString('base64');
+    const resposta = await fetch('https://api.mailjet.com/v3.1/send', {
+      method: 'POST',
+      headers: { Authorization: `Basic ${credenciais}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        Messages: [{
+          From: { Email: email, Name: name },
+          To: [{ Email: para }],
+          Subject: assunto,
+          HTMLPart: html,
+          ...(responderPara ? { ReplyTo: { Email: responderPara } } : {}),
+        }],
+      }),
+      signal: AbortSignal.timeout(10000),
+    });
+    const corpo = await resposta.json().catch(() => ({}));
+    if (!resposta.ok || corpo.Messages?.[0]?.Status !== 'success') {
+      /* Erros mais comuns: chaves trocadas (401) ou remetente (SMTP_FROM)
+         ainda não validado no Mailjet (Senders & Domains) */
+      throw new Error(`Mailjet respondeu HTTP ${resposta.status}: ${JSON.stringify(corpo).slice(0, 300)}`);
+    }
+    return true;
+  }
 
   if (brevoConfigurado) {
     const resposta = await fetch('https://api.brevo.com/v3/smtp/email', {
@@ -85,7 +115,7 @@ const sendPasswordResetEmail = async (email, tokenBruto) => {
   });
 
   if (!enviado) {
-    console.log('\n📧 [DEV] Nenhum envio de e-mail configurado (BREVO_API_KEY ou SMTP) — e-mail não enviado de verdade.');
+    console.log('\n📧 [DEV] Nenhum envio de e-mail configurado (Mailjet, Brevo ou SMTP) — e-mail não enviado de verdade.');
     console.log(`📧 [DEV] Token de recuperação para ${email}: ${tokenBruto}`);
     console.log(`📧 [DEV] Link de redefinição: ${link}\n`);
   }

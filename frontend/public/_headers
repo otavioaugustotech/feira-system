@@ -1,0 +1,20 @@
+# Netlify — cabeçalhos do sistema (vão junto no dist/, como o _redirects).
+# Única fonte desses cabeçalhos no Netlify: não repita no netlify.toml,
+# senão o Netlify junta os dois valores e o cabeçalho fica inválido.
+# Cross-Origin-Opener-Policy: o popup do login com Google precisa conversar com a página.
+
+/*
+  Cross-Origin-Opener-Policy: same-origin-allow-popups
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+
+# index.html nunca em cache: um deploy novo aparece na hora
+/index.html
+  Cache-Control: no-cache
+
+# arquivos do Vite têm hash no nome: cache longo é seguro
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

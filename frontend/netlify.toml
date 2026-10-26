@@ -1,0 +1,21 @@
+# ═══════════════════════════════════════════════════════════════════
+# netlify.toml — Sistema React (app.feirasystem.com.br)
+# No Netlify: Add new site → Import from Git → Base directory = frontend
+# (o Netlify lê este arquivo a partir dessa pasta).
+#
+# Variáveis em Site configuration → Environment variables (lidas NO BUILD;
+# depois de mudar, faça "Clear cache and deploy site"):
+#   VITE_API_URL          = https://api.feirasystem.com.br/api
+#   VITE_GOOGLE_CLIENT_ID = seu-client-id.apps.googleusercontent.com
+#
+# O fallback de rotas (404) e os cabeçalhos ficam em public/_redirects e
+# public/_headers: vão dentro do dist/, então funcionam até publicando a
+# pasta dist manualmente. Não duplique aqui.
+# ═══════════════════════════════════════════════════════════════════
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"

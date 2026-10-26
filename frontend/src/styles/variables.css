@@ -1,0 +1,80 @@
+:root {
+  /* Paleta — Feira System */
+  --navy: #0f1b2b;
+  --navy-dark: #0a121d;
+  --verde: #16a05c;
+  --verde-escuro: #0d7a44;
+  --verde-claro: #d1f0e1;
+  --fundo: #f3f8f5;
+  --superficie: #ffffff;
+  --branco: #ffffff;
+  --texto: #0f1f17;
+  --texto-secundario: #3d6b52;
+  --borda: #dfe9e3;
+  --amarelo: #f59e0b;
+  --laranja: #f97316;
+  --vermelho: #ef4444;
+  --vermelho-claro: #fde3e3;
+  --azul: #3b82f6;
+  --azul-claro: #dbe8fe;
+  --roxo: #8b5cf6;
+  --roxo-claro: #ede9fe;
+
+  --raio: 10px;
+  --raio-lg: 16px;
+  --sombra: 0 1px 3px rgba(15, 27, 43, 0.08), 0 1px 2px rgba(15, 27, 43, 0.06);
+  --sombra-lg: 0 10px 30px rgba(15, 27, 43, 0.12);
+
+  --fonte: 'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+
+  /* Escalas ajustáveis pela Central de Acessibilidade */
+  --escala-fonte: 1;
+  --escala-linha: 1;
+  --escala-letra: 0;
+  --escala-palavra: 0;
+
+  --foco-cor: #f59e0b;
+  --foco-cor-padrao: #bec0c4;
+
+  /* Cor do texto/borda desenhado em cima do fundo --verde-claro (badge de
+     sucesso, hover do botão "ghost"). No modo claro é igual a --verde-escuro
+     (não muda nada visualmente); no modo escuro vira branco, porque
+     --verde-claro fica bem escuro lá e o texto verde ficava com contraste
+     baixo demais (2.35:1, abaixo do mínimo de 4.5:1 recomendado). */
+  --sucesso-contraste: var(--verde-escuro);
+
+  --sidebar-largura: 260px;
+  --header-altura: 68px;
+
+  /* Borda dos cards do Dashboard — verde no modo claro, branco de verdade no
+     escuro (--branco não serve aqui: no modo escuro ele vira quase a cor do
+     fundo, pensado pra parecer "face de card", não pra ser uma borda visível). */
+  --dash-card-borda: var(--verde);
+
+  /* Cor de texto/ícone pra ações destrutivas discretas (Cancelar, Remover).
+     No claro é o --vermelho normal; no escuro precisa de um tom mais claro
+     (ver bloco de baixo) porque o --vermelho padrão dá só 4.04:1 de
+     contraste no fundo escuro, abaixo do mínimo de 4.5:1 pra texto. */
+  --perigo-texto: var(--vermelho);
+}
+
+/* ═══ Modo escuro ═══ */
+:root[data-tema='escuro'] {
+  --navy: #0a121d;
+  --fundo: #0d1a14;
+  --superficie: #142a20;
+  --branco: #142a20;
+  --texto: #eaf5ee;
+  --texto-secundario: #a7c9b7;
+  --borda: #234436;
+  --verde-claro: #17392a;
+  --vermelho-claro: #3a1c1c;
+  --azul-claro: #1e3a5f;
+  --roxo-claro: #3b2f5e;
+  --sombra: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --sombra-lg: 0 10px 30px rgba(0, 0, 0, 0.5);
+  --sucesso-contraste: #ffffff;
+  --foco-cor-padrao: #9ca3af;
+  --dash-card-borda: #ffffff;
+  --perigo-texto: #f87171;
+}

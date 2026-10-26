@@ -1,0 +1,65 @@
+/* ⭐ Página de Perfil (visual igual ao anterior, agora em CSS) */
+.perfil-topo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.perfil-topo-texto h3 { margin: 0; }
+.perfil-topo-texto p { margin: 0; color: var(--texto-secundario); }
+
+.perfil-lista { display: grid; gap: 0.9rem; margin: 0; }
+.perfil-linha { display: flex; align-items: center; gap: 0.6rem; }
+.perfil-linha-icone { color: var(--texto-secundario); flex-shrink: 0; }
+.perfil-linha dt { font-size: 0.78rem; color: var(--texto-secundario); font-weight: 600; }
+.perfil-linha dd { margin: 0; word-break: break-word; }
+
+.perfil-acoes {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--borda);
+}
+
+.perfil-titulo-edicao { margin: 0 0 1.25rem; }
+
+.perfil-foto-edicao {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+.perfil-foto-botoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  flex: 1;
+  min-width: 200px;
+}
+.perfil-foto-dica {
+  width: 100%;
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--texto-secundario);
+}
+/* o input de arquivo fica escondido; quem abre ele é o botão "Escolher foto" */
+.perfil-input-arquivo {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* campo de e-mail travado: aparência de "não editável" */
+.perfil-titulo-edicao ~ .campo .input:disabled,
+form .campo .input:disabled {
+  background: var(--fundo);
+  color: var(--texto-secundario);
+  border-color: var(--borda);
+  cursor: not-allowed;
+}

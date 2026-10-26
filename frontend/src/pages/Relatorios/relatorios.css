@@ -1,0 +1,38 @@
+.rel-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin: 1.25rem 0;
+}
+.rel-kpi {
+  text-align: center;
+  border: 2px solid var(--dash-card-borda);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.rel-kpi:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--sombra-lg);
+}
+
+.rel-kpi-receita     { border-color: var(--verde); }
+.rel-kpi-lucro        { border-color: var(--azul); }
+.rel-kpi-ticket       { border-color: var(--roxo); }
+.rel-kpi-desperdicio  { border-color: var(--vermelho); }
+
+.rel-kpi p:first-child {
+  color: var(--texto-secundario);
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin: 0;
+}
+.rel-kpi-valor {
+  font-size: 1.35rem;
+  font-weight: 800;
+  margin: 0.25rem 0 0;
+}
+.rel-periodo-botoes {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}

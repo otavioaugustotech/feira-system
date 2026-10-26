@@ -1,0 +1,4 @@
+# Netlify — SPA: qualquer rota (/login, /cadastro, /dashboard...) entrega o
+# index.html e o React Router decide a tela. Fica em public/ para ir junto
+# no dist/: funciona mesmo publicando a pasta dist arrastando no painel.
+/*    /index.html    200

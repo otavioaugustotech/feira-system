@@ -1,0 +1,62 @@
+/* ═══ Movimento reduzido ═══
+   Ativado via [data-reduzir-movimento="true"] no <html>. */
+html[data-reduzir-movimento='true'] *,
+html[data-reduzir-movimento='true'] *::before,
+html[data-reduzir-movimento='true'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* ⭐ CORREÇÃO: só deixar a transição instantânea não bastava — o card ainda
+   "pulava" pra cima de forma brusca, sem suavidade nenhuma, o que incomoda
+   ainda mais quem tem sensibilidade a movimento. Com "Reduzir animações"
+   ligado, o efeito de levantar os cards de KPI (Dashboard e Relatórios) é
+   desligado por completo: o card fica parado, sem se mover no hover. */
+html[data-reduzir-movimento='true'] .dash-kpi-card:hover,
+html[data-reduzir-movimento='true'] .rel-kpi:hover,
+html[data-reduzir-movimento='true'] .btn:active:not(:disabled) {
+  transform: none !important;
+}
+
+/* Respeita também a preferência do sistema operacional */
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-reduzir-movimento='false']) *,
+  html:not([data-reduzir-movimento='false']) *::before,
+  html:not([data-reduzir-movimento='false']) *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  html:not([data-reduzir-movimento='false']) .dash-kpi-card:hover,
+  html:not([data-reduzir-movimento='false']) .rel-kpi:hover,
+  html:not([data-reduzir-movimento='false']) .btn:active:not(:disabled) {
+    transform: none !important;
+  }
+}
+
+/* ═══ Modo de leitura ═══
+   Aumenta espaçamento, reforça contraste e reduz distrações visuais. */
+html[data-modo-leitura='true'] {
+  --escala-linha: 1.8;
+  --escala-letra: 0.5;
+}
+
+html[data-modo-leitura='true'] body {
+  max-width: 100%;
+}
+
+html[data-modo-leitura='true'] .decorativo,
+html[data-modo-leitura='true'] [data-decorativo='true'] {
+  opacity: 0.35;
+}
+
+/* ═══ Destaque de foco reforçado ═══ */
+html[data-destaque-foco='true'] :focus-visible {
+  outline: 4px solid var(--foco-cor);
+  outline-offset: 4px;
+  box-shadow: 0 0 0 8px rgba(245, 158, 11, 0.25);
+}

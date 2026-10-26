@@ -33,9 +33,9 @@ services:
 
       # Endereços públicos (troque pelo seu domínio)
       - key: FRONTEND_URL
-        value: https://app.feirasystem.com.br
+        value: https://feira-system-app.netlify.app
       - key: LANDING_URL
-        value: https://feirasystem.com.br,https://www.feirasystem.com.br
+        value: https://feira-system.netlify.app
 
       # Segredos
       - key: JWT_SECRET

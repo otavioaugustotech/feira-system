@@ -12,4 +12,7 @@ export const authService = {
   esqueciSenha: (email) => api.post('/auth/esqueci-senha', { email }).then((r) => r.data.mensagem),
   redefinirSenha: (email, token, nova_senha) =>
     api.post('/auth/redefinir-senha', { email, token, nova_senha }).then((r) => r.data.mensagem),
+  /* ⭐ Trocar a senha estando logado (sem e-mail) */
+  alterarSenha: (senha_atual, nova_senha) =>
+    api.put('/auth/senha', { senha_atual, nova_senha }).then((r) => r.data.mensagem),
 };

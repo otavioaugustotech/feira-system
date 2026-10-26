@@ -6,7 +6,6 @@
    (utils/imagem.js) antes de ir para o servidor.
    ═══════════════════════════════════════════════════════════ */
 import { useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
 import {
   UserCircle, Mail, Store, KeyRound, LogOut, Calendar,
   Pencil, Camera, Trash2, Save, X,
@@ -16,9 +15,11 @@ import Button from '../../components/ui/Button.jsx';
 import Input from '../../components/ui/Input.jsx';
 import Alert from '../../components/ui/Alert.jsx';
 import Avatar from '../../components/ui/Avatar.jsx';
+import Modal from '../../components/ui/Modal.jsx';
 import { useAuth } from '../../hooks/useAuth.js';
 import { useToast } from '../../hooks/useToast.js';
 import { extrairMensagemErro } from '../../services/api.js';
+import { authService } from '../../services/authService.js';
 import { formatarData } from '../../utils/formatters.js';
 import { validarArquivoImagem, prepararFotoPerfil } from '../../utils/imagem.js';
 import './perfil.css';
@@ -35,8 +36,75 @@ function LinhaInfo({ icone: Icone, rotulo, valor }) {
   );
 }
 
+/* ⭐ Trocar a senha estando logado — não depende de e-mail.
+   Conta criada pelo Google (tem_senha = false) não tem senha atual:
+   nesse caso o campo some e a pessoa só define a primeira senha. */
+function ModalAlterarSenha({ aberto, temSenha, onFechar, onSucesso }) {
+  const [form, setForm] = useState({ atual: '', nova: '', confirmar: '' });
+  const [erros, setErros] = useState({});
+  const [erroGeral, setErroGeral] = useState('');
+  const [salvando, setSalvando] = useState(false);
+
+  const fechar = () => {
+    setForm({ atual: '', nova: '', confirmar: '' });
+    setErros({});
+    setErroGeral('');
+    onFechar();
+  };
+
+  const salvar = async (e) => {
+    e.preventDefault();
+    setErroGeral('');
+    const novosErros = {};
+    if (temSenha && !form.atual) novosErros.atual = 'Informe sua senha atual.';
+    if (form.nova.length < 6) novosErros.nova = 'A nova senha deve ter ao menos 6 caracteres.';
+    if (form.confirmar !== form.nova) novosErros.confirmar = 'As senhas não coincidem.';
+    setErros(novosErros);
+    if (Object.keys(novosErros).length > 0) return;
+
+    setSalvando(true);
+    try {
+      await authService.alterarSenha(temSenha ? form.atual : undefined, form.nova);
+      fechar();
+      onSucesso();
+    } catch (err) {
+      setErroGeral(extrairMensagemErro(err));
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  const campo = (nome) => ({
+    value: form[nome],
+    onChange: (e) => setForm((f) => ({ ...f, [nome]: e.target.value })),
+    erro: erros[nome],
+  });
+
+  return (
+    <Modal aberto={aberto} titulo={temSenha ? 'Alterar senha' : 'Criar uma senha'} onFechar={fechar}>
+      <form onSubmit={salvar} noValidate>
+        {erroGeral && <Alert tipo="erro">{erroGeral}</Alert>}
+        {!temSenha && (
+          <Alert tipo="info">
+            Sua conta foi criada com o Google. Crie uma senha para também poder entrar com e-mail e senha.
+          </Alert>
+        )}
+        {temSenha && (
+          <Input label="Senha atual" type="password" obrigatorio autoComplete="current-password" {...campo('atual')} />
+        )}
+        <Input label="Nova senha" type="password" obrigatorio autoComplete="new-password" dica="Mínimo de 6 caracteres" {...campo('nova')} />
+        <Input label="Confirmar nova senha" type="password" obrigatorio autoComplete="new-password" {...campo('confirmar')} />
+        <div className="perfil-acoes">
+          <Button type="submit" icone={Save} carregando={salvando}>Salvar nova senha</Button>
+          <Button variante="secondary" icone={X} onClick={fechar} disabled={salvando}>Cancelar</Button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
 export default function Perfil() {
-  const { usuario, sair, atualizarPerfil } = useAuth();
+  const { usuario, sair, atualizarPerfil, atualizarUsuario } = useAuth();
   const { sucesso } = useToast();
   const inputArquivoRef = useRef(null);
 
@@ -48,6 +116,9 @@ export default function Perfil() {
   const [erroGeral, setErroGeral] = useState('');
   const [salvando, setSalvando] = useState(false);
   const [processandoFoto, setProcessandoFoto] = useState(false);
+  const [alterandoSenha, setAlterandoSenha] = useState(false);
+  /* tem_senha vem do perfil; perfis antigos em cache sem o campo contam como "tem senha" */
+  const temSenha = usuario?.tem_senha !== false;
 
   const fotoAtual = novaFoto === undefined ? usuario?.foto_url : novaFoto;
 
@@ -147,9 +218,9 @@ export default function Perfil() {
 
             <div className="perfil-acoes">
               <Button icone={Pencil} onClick={abrirEdicao}>Editar perfil</Button>
-              <Link to="/esqueci-senha" className="btn btn-secondary">
-                <KeyRound size={18} aria-hidden="true" /> <span>Alterar senha</span>
-              </Link>
+              <Button variante="secondary" icone={KeyRound} onClick={() => setAlterandoSenha(true)}>
+                {temSenha ? 'Alterar senha' : 'Criar senha'}
+              </Button>
               <Button variante="danger" icone={LogOut} onClick={sair}>Sair da conta</Button>
             </div>
           </>
@@ -224,6 +295,16 @@ export default function Perfil() {
           </form>
         )}
       </Card>
+
+      <ModalAlterarSenha
+        aberto={alterandoSenha}
+        temSenha={temSenha}
+        onFechar={() => setAlterandoSenha(false)}
+        onSucesso={() => {
+          sucesso(temSenha ? 'Senha alterada com sucesso!' : 'Senha criada! Agora você também pode entrar com e-mail e senha.');
+          atualizarUsuario({ tem_senha: true });
+        }}
+      />
     </div>
   );
 }

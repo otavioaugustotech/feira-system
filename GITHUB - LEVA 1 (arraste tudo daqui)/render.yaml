@@ -1,0 +1,84 @@
+# ═══════════════════════════════════════════════════════════════════
+# render.yaml — Blueprint do Render para a API do Feira System
+# Fica na RAIZ do repositório (ao lado das pastas backend/ e frontend/).
+# No Render: New → Blueprint → escolha o repositório → Apply.
+#
+# Cria:
+#   • feira-system-api  → Web Service Node (pasta backend/)
+#   • feira-system-db   → PostgreSQL gerenciado
+# As variáveis com "sync: false" o Render pergunta na hora do Apply
+# (ficam só no painel, nunca no Git).
+# ═══════════════════════════════════════════════════════════════════
+
+services:
+  - type: web
+    name: feira-system-api
+    runtime: node
+    rootDir: backend
+    region: virginia          # mesma região do banco (as duas precisam bater)
+    plan: free                # "starter" não hiberna: sem atraso no 1º acesso
+    buildCommand: npm ci --omit=dev
+    startCommand: node server.js
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "20"
+      - key: TRUST_PROXY       # o Render fica na frente da API como proxy
+        value: "1"
+      - key: APP_TIMEZONE
+        value: America/Sao_Paulo
+
+      # Endereços públicos (troque pelo seu domínio)
+      - key: FRONTEND_URL
+        value: https://app.feirasystem.com.br
+      - key: LANDING_URL
+        value: https://feirasystem.com.br,https://www.feirasystem.com.br
+
+      # Segredos
+      - key: JWT_SECRET
+        generateValue: true    # o Render gera uma string aleatória forte
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+
+      # Banco: preenchido automaticamente a partir do Postgres abaixo
+      - key: DB_HOST
+        fromDatabase: { name: feira-system-db, property: host }
+      - key: DB_PORT
+        fromDatabase: { name: feira-system-db, property: port }
+      - key: DB_USER
+        fromDatabase: { name: feira-system-db, property: user }
+      - key: DB_PASSWORD
+        fromDatabase: { name: feira-system-db, property: password }
+      - key: DB_NAME
+        fromDatabase: { name: feira-system-db, property: database }
+
+      # E-mail (recuperação de senha + aviso de leads). Opcionais.
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_SECURE
+        value: "false"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        value: "Feira System <no-reply@feirasystem.com.br>"
+      - key: LEADS_NOTIFY_EMAIL
+        sync: false
+      - key: LEADS_WEBHOOK_URL
+        sync: false
+      - key: LEADS_WEBHOOK_TOKEN
+        sync: false
+
+databases:
+  - name: feira-system-db
+    databaseName: feira_system
+    user: feira_system
+    region: virginia
+    plan: free                 # o Postgres free do Render expira após 30 dias; use "basic-256mb" em produção
+    ipAllowList: []            # só serviços do próprio Render acessam; para rodar o schema.sql, libere seu IP no painel

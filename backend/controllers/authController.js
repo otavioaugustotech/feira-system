@@ -106,6 +106,20 @@ const redefinirSenha = async (req, res) => {
   }
 };
 
+/* PUT /api/auth/senha — ⭐ NOVO (trocar a senha estando logado, sem e-mail) */
+const alterarSenha = async (req, res) => {
+  try {
+    const { senha_atual, nova_senha } = req.body;
+    await authService.alterarSenha(req.usuario.id, senha_atual, nova_senha);
+    return sucesso(res, null, 'Senha alterada com sucesso!');
+  } catch (err) {
+    if (err.message === 'SENHA_ATUAL_INCORRETA') return erro(res, 'A senha atual está incorreta.', 400);
+    if (err.message === 'USUARIO_NAO_ENCONTRADO') return erro(res, 'Usuário não encontrado.', 404);
+    console.error('Erro ao alterar senha:', err);
+    return erro(res, 'Erro ao alterar senha.', 500);
+  }
+};
+
 /* GET /api/auth/perfil — ⭐ NOVO */
 const obterPerfil = async (req, res) => {
   try {
@@ -130,4 +144,4 @@ const atualizarPerfil = async (req, res) => {
   }
 };
 
-module.exports = { registro, login, loginGoogle, esqueciSenha, redefinirSenha, obterPerfil, atualizarPerfil };
+module.exports = { registro, login, loginGoogle, esqueciSenha, redefinirSenha, alterarSenha, obterPerfil, atualizarPerfil };

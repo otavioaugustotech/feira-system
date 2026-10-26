@@ -4,7 +4,7 @@ const authController = require('../controllers/authController');
 const autenticar = require('../middleware/autenticar');
 const validar = require('../middleware/validar');
 const { limitarLogin } = require('../middleware/limitarTentativas'); /* ⭐ correção da auditoria */
-const { registroSchema, loginSchema, googleSchema, perfilSchema, esqueciSenhaSchema, redefinirSenhaSchema } = require('../schemas');
+const { registroSchema, loginSchema, googleSchema, perfilSchema, esqueciSenhaSchema, redefinirSenhaSchema, alterarSenhaSchema } = require('../schemas');
 const router = Router();
 
 router.post('/registro', limitarLogin, validar(registroSchema), authController.registro);
@@ -17,5 +17,9 @@ router.post('/redefinir-senha', limitarLogin, validar(redefinirSenhaSchema), aut
 /* ⭐ Perfil (precisa estar logado) */
 router.get('/perfil', autenticar, authController.obterPerfil);
 router.put('/perfil', autenticar, validar(perfilSchema), authController.atualizarPerfil);
+
+/* ⭐ Trocar a senha estando logado (não depende de e-mail). limitarLogin
+   evita que alguém com o celular destravado fique chutando a senha atual. */
+router.put('/senha', autenticar, limitarLogin, validar(alterarSenhaSchema), authController.alterarSenha);
 
 module.exports = router;

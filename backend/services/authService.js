@@ -213,8 +213,31 @@ const redefinirSenha = async (email, tokenBruto, novaSenha) => {
   }
 };
 
-/* ══ PERFIL (⭐ NOVO) ══ */
-const CAMPOS_PERFIL = 'id, nome, email, nome_banca, foto_url, created_at';
+/* ══ ALTERAR SENHA estando logado (⭐ NOVO) ══
+   Não depende de e-mail. Conta com senha: exige a senha atual.
+   Conta criada pelo Google (sem senha): pode definir a primeira senha,
+   já que a pessoa está autenticada. */
+const alterarSenha = async (usuarioId, senhaAtual, novaSenha) => {
+  const res = await db.query('SELECT senha_hash FROM usuarios WHERE id = $1', [usuarioId]);
+  if (res.rows.length === 0) throw new Error('USUARIO_NAO_ENCONTRADO');
+
+  const { senha_hash } = res.rows[0];
+  if (senha_hash) {
+    if (!senhaAtual || !(await bcrypt.compare(senhaAtual, senha_hash))) {
+      throw new Error('SENHA_ATUAL_INCORRETA');
+    }
+  }
+
+  const novoHash = await bcrypt.hash(novaSenha, 12);
+  await db.query('UPDATE usuarios SET senha_hash = $1 WHERE id = $2', [novoHash, usuarioId]);
+  /* Códigos de "esqueci a senha" pendentes deixam de valer */
+  await db.query('UPDATE password_reset_tokens SET used_at = NOW() WHERE usuario_id = $1 AND used_at IS NULL', [usuarioId]);
+};
+
+/* ══ PERFIL (⭐ NOVO) ══
+   tem_senha: false para conta criada só com o Google (a tela de alterar
+   senha não pede a "senha atual" nesse caso). */
+const CAMPOS_PERFIL = 'id, nome, email, nome_banca, foto_url, created_at, (senha_hash IS NOT NULL) AS tem_senha';
 
 const obterPerfil = async (usuarioId) => {
   const res = await db.query(`SELECT ${CAMPOS_PERFIL} FROM usuarios WHERE id = $1`, [usuarioId]);
@@ -247,6 +270,6 @@ const atualizarPerfil = async (usuarioId, { nome, nome_banca, foto }) => {
 };
 
 module.exports = {
-  registrar, login, loginGoogle, solicitarRecuperacao, redefinirSenha,
+  registrar, login, loginGoogle, solicitarRecuperacao, redefinirSenha, alterarSenha,
   obterPerfil, atualizarPerfil,
 };

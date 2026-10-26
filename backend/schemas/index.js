@@ -76,6 +76,13 @@ const redefinirSenhaSchema = z.object({
   nova_senha: z.string().min(6),
 });
 
+/* ⭐ Trocar senha estando logado. senha_atual é opcional só porque contas
+   criadas pelo Google não têm senha — o service exige quando a conta tem. */
+const alterarSenhaSchema = z.object({
+  senha_atual: z.string().max(200).optional(),
+  nova_senha: z.string().min(6, 'a nova senha deve ter ao menos 6 caracteres').max(200, 'senha muito longa'),
+});
+
 const metaSchema = z.object({
   ano: z.number().int().min(2020).max(2100),
   mes: z.number().int().min(1).max(12),
@@ -118,5 +125,6 @@ module.exports = {
   perfilSchema,
   esqueciSenhaSchema,
   redefinirSenhaSchema,
+  alterarSenhaSchema,
   metaSchema,
 };

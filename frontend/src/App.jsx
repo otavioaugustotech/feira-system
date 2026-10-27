@@ -3,6 +3,7 @@ import { AuthProvider } from './context/AuthContext.jsx';
 import { AccessibilityProvider } from './context/AccessibilityContext.jsx';
 import { ToastProvider } from './context/ToastContext.jsx';
 import ProtectedRoute from './components/layout/ProtectedRoute.jsx';
+import AdminRoute from './components/layout/AdminRoute.jsx';
 import Layout from './components/layout/Layout.jsx';
 
 import Login from './pages/Login/Login.jsx';
@@ -16,6 +17,7 @@ import Estoque from './pages/Estoque/Estoque.jsx';
 import Desperdicios from './pages/Desperdicios/Desperdicios.jsx';
 import Relatorios from './pages/Relatorios/Relatorios.jsx';
 import Perfil from './pages/Perfil/Perfil.jsx';
+import Contatos from './pages/Contatos/Contatos.jsx';
 import NaoEncontrada from './pages/NaoEncontrada.jsx';
 
 export default function App() {
@@ -44,6 +46,7 @@ export default function App() {
                 <Route path="/desperdicios" element={<Desperdicios />} />
                 <Route path="/relatorios" element={<Relatorios />} />
                 <Route path="/perfil" element={<Perfil />} />
+                <Route path="/contatos" element={<AdminRoute><Contatos /></AdminRoute>} />
               </Route>
 
               <Route path="/" element={<Navigate to="/dashboard" replace />} />

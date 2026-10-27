@@ -52,6 +52,26 @@ describe('E-mail via Gmail API', () => {
     expect(corpo).toContain('redefinir-senha?email=cliente%40teste.com&token=abc123');
   });
 
+  test('aviso de novo contato vai para o e-mail do dono, com "Responder" para quem escreveu', async () => {
+    process.env.LEADS_NOTIFY_EMAIL = 'dono@teste.com';
+    getAccessToken = jest.fn().mockResolvedValue({ token: 'access-123' });
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, text: async () => '{}' });
+
+    await emailService.sendLeadNotificationEmail({
+      id: 7, nome: 'Maria <b>Feirante</b>', email: 'maria@feira.com', telefone: '11987654321',
+      tipo: 'demonstracao', mensagem: 'Quero conhecer o sistema',
+    });
+
+    const mime = Buffer.from(JSON.parse(global.fetch.mock.calls[0][1].body).raw, 'base64url').toString('utf8');
+    expect(mime).toContain('To: dono@teste.com');
+    expect(mime).toContain('Reply-To: maria@feira.com');
+    const corpo = Buffer.from(mime.split('\r\n\r\n')[1].replace(/\r\n/g, ''), 'base64').toString('utf8');
+    expect(corpo).toContain('Pedido de demonstração');
+    expect(corpo).toContain('Maria &lt;b&gt;Feirante&lt;/b&gt;'); /* HTML do formulário sai escapado */
+    expect(corpo).toContain('11987654321');
+    delete process.env.LEADS_NOTIFY_EMAIL;
+  });
+
   test('refresh token inválido vira erro explicando o que fazer', async () => {
     getAccessToken = jest.fn().mockRejectedValue(new Error('invalid_grant'));
     await expect(emailService.sendPasswordResetEmail('cliente@teste.com', 'abc123')).rejects.toThrow(/invalid_grant.*GMAIL_REFRESH_TOKEN/);

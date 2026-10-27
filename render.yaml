@@ -70,14 +70,11 @@ services:
         sync: false
       - key: SMTP_FROM
         value: "Feira System <otavioac01@gmail.com>"
-      # Recebe um e-mail a cada contato novo do formulário da Landing Page
+      # Cada "Fale conosco" da Landing Page chega por e-mail SÓ para o dono
+      # do sistema (os feirantes não veem nada disso). "Responder" no e-mail
+      # já vai direto para quem escreveu.
       - key: LEADS_NOTIFY_EMAIL
         value: otavioac01@gmail.com
-
-      # Administradores (veem a tela "Contatos"). Vários: separe por vírgula.
-      - key: ADMIN_EMAILS
-        value: otavioac01@gmail.com
-
       - key: LEADS_WEBHOOK_URL
         sync: false
       - key: LEADS_WEBHOOK_TOKEN

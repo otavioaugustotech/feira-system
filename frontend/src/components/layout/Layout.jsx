@@ -14,7 +14,6 @@ const TITULOS = {
   '/desperdicios': 'Desperdícios',
   '/relatorios': 'Relatórios',
   '/perfil': 'Perfil',
-  '/contatos': 'Contatos',
 };
 
 export default function Layout() {

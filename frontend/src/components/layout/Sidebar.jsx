@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { ShoppingBasket, LayoutDashboard, Package, ShoppingCart, Boxes, Trash2, FileBarChart, UserCircle, LogOut, Inbox } from 'lucide-react';
+import { ShoppingBasket, LayoutDashboard, Package, ShoppingCart, Boxes, Trash2, FileBarChart, UserCircle, LogOut } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth.js';
 import './layout.css';
 
@@ -13,14 +13,8 @@ const ITENS = [
   { to: '/perfil', rotulo: 'Perfil', Icone: UserCircle },
 ];
 
-/* ⭐ Só aparece para o administrador (ADMIN_EMAILS no backend) */
-const ITENS_ADMIN = [
-  { to: '/contatos', rotulo: 'Contatos', Icone: Inbox },
-];
-
 export default function Sidebar({ aberta, onFechar }) {
-  const { sair, usuario } = useAuth();
-  const itens = usuario?.admin ? [...ITENS, ...ITENS_ADMIN] : ITENS;
+  const { sair } = useAuth();
 
   return (
     <>
@@ -32,7 +26,7 @@ export default function Sidebar({ aberta, onFechar }) {
         </div>
 
         <div className="sidebar-nav">
-          {itens.map(({ to, rotulo, Icone }) => (
+          {ITENS.map(({ to, rotulo, Icone }) => (
             <NavLink
               key={to}
               to={to}

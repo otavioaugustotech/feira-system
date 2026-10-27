@@ -14,7 +14,7 @@ const { sendPasswordResetEmail } = require('../utils/emailService');
 
 /* ══ REGISTRAR novo usuário (mantido) ══ */
 const registrar = async (nome, email, senha, nomeBanca) => {
-  const emailExiste = await db.query('SELECT id FROM usuarios WHERE email = $1', [email]);
+  const emailExiste = await db.query('SELECT id FROM usuarios WHERE LOWER(email) = LOWER($1)', [email]);
   if (emailExiste.rows.length > 0) throw new Error('EMAIL_DUPLICADO');
 
   const senhaHash = await bcrypt.hash(senha, 12);
@@ -34,7 +34,7 @@ const registrar = async (nome, email, senha, nomeBanca) => {
 /* ══ LOGIN (mantido) ══ */
 const login = async (email, senha) => {
   const resultado = await db.query(
-    'SELECT id, nome, email, senha_hash, nome_banca, foto_url, created_at FROM usuarios WHERE email = $1',
+    'SELECT id, nome, email, senha_hash, nome_banca, foto_url, created_at FROM usuarios WHERE LOWER(email) = LOWER($1)',
     [email]
   );
 
@@ -145,7 +145,7 @@ const gerarToken = (usuario) => {
    Por segurança, SEMPRE retorna sucesso mesmo se o e-mail não existir
    (evita que alguém descubra quais e-mails estão cadastrados). */
 const solicitarRecuperacao = async (email) => {
-  const usuarioRes = await db.query('SELECT id, nome FROM usuarios WHERE email = $1', [email]);
+  const usuarioRes = await db.query('SELECT id, nome FROM usuarios WHERE LOWER(email) = LOWER($1)', [email]);
 
   if (usuarioRes.rows.length === 0) {
     /* Resposta genérica para o cliente, mas registra no log (com o e-mail
@@ -184,7 +184,7 @@ const solicitarRecuperacao = async (email) => {
 
 /* ══ REDEFINIR SENHA (⭐ NOVO) ══ */
 const redefinirSenha = async (email, tokenBruto, novaSenha) => {
-  const usuarioRes = await db.query('SELECT id FROM usuarios WHERE email = $1', [email]);
+  const usuarioRes = await db.query('SELECT id FROM usuarios WHERE LOWER(email) = LOWER($1)', [email]);
   if (usuarioRes.rows.length === 0) throw new Error('TOKEN_INVALIDO');
   const usuarioId = usuarioRes.rows[0].id;
 

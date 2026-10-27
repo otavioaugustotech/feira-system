@@ -37,13 +37,13 @@ const desperdicioSchema = z.object({
 
 const registroSchema = z.object({
   nome: z.string().min(1),
-  email: z.string().email('e-mail inválido'),
+  email: z.string().trim().toLowerCase().email('e-mail inválido'),
   senha: z.string().min(6, 'senha deve ter ao menos 6 caracteres'),
   nome_banca: z.string().optional(),
 });
 
 const loginSchema = z.object({
-  email: z.string().email(),
+  email: z.string().trim().toLowerCase().email(),
   senha: z.string().min(1),
 });
 
@@ -67,11 +67,11 @@ const perfilSchema = z.object({
 });
 
 const esqueciSenhaSchema = z.object({
-  email: z.string().email(),
+  email: z.string().trim().toLowerCase().email(),
 });
 
 const redefinirSenhaSchema = z.object({
-  email: z.string().email(),
+  email: z.string().trim().toLowerCase().email(),
   token: z.string().min(10),
   nova_senha: z.string().min(6),
 });

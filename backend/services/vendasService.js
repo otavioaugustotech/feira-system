@@ -83,10 +83,21 @@ const buscarPorId = async (id, usuarioId) => {
    }
 */
 const criar = async (usuarioId, dados) => {
-  const { forma_pagamento, itens } = dados;
+  const { forma_pagamento } = dados;
 
   if (!forma_pagamento) throw new Error('FORMA_PAGAMENTO_OBRIGATORIA');
-  if (!Array.isArray(itens) || itens.length === 0) throw new Error('ITENS_OBRIGATORIOS');
+  if (!Array.isArray(dados.itens) || dados.itens.length === 0) throw new Error('ITENS_OBRIGATORIOS');
+
+  /* ⭐ CORREÇÃO: o mesmo produto em duas linhas ([{1, 2}, {1, 2}]) era
+     conferido linha a linha contra o estoque cheio — 2 + 2 passava com
+     estoque 3 e só o CHECK do banco barrava, com erro 500 genérico.
+     Agora soma as quantidades do mesmo produto antes de conferir. */
+  const somadas = new Map();
+  for (const item of dados.itens) {
+    const atual = somadas.get(item.produto_id) || 0;
+    somadas.set(item.produto_id, +(atual + Number(item.quantidade)).toFixed(3));
+  }
+  const itens = [...somadas].map(([produto_id, quantidade]) => ({ produto_id, quantidade }));
 
   const client = await db.connect();
   try {

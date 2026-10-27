@@ -2,23 +2,61 @@
    utils/emailService.js — RECONSTRUÍDO (não fazia parte do pacote
    "faltante", mas authService.js importa `sendPasswordResetEmail` daqui).
 
-   ⭐ Três jeitos de enviar, escolhidos pelo .env (nesta ordem):
-   1) MAILJET_API_KEY + MAILJET_SECRET_KEY → API HTTPS do Mailjet
+   ⭐ Jeitos de enviar, escolhidos pelo .env (nesta ordem):
+   0) GMAIL_CLIENT_SECRET + GMAIL_REFRESH_TOKEN (+ GMAIL_CLIENT_ID, que por
+      padrão é o mesmo GOOGLE_CLIENT_ID do login) → Gmail API oficial do
+      Google, pelo projeto do Google Cloud. Envia pelo SEU Gmail, via HTTPS
+      (funciona no Render free). O remetente (SMTP_FROM) deve ser essa conta.
+   1) EMAILJS_SERVICE_ID + EMAILJS_TEMPLATE_ID + EMAILJS_PUBLIC_KEY +
+      EMAILJS_PRIVATE_KEY → API HTTPS do EmailJS (emailjs.com, grátis até
+      200/mês). Envia pelo SEU Gmail conectado lá — sem domínio e sem SMS.
+   2) MAILJET_API_KEY + MAILJET_SECRET_KEY → API HTTPS do Mailjet
       (mailjet.com, grátis até 200/dia, conta validada por e-mail).
-   2) BREVO_API_KEY → API HTTPS do Brevo (brevo.com, grátis até 300/dia;
+   3) BREVO_API_KEY → API HTTPS do Brevo (brevo.com, grátis até 300/dia;
       exige confirmar o celular por SMS).
-      Use 1 ou 2 no Render: o plano gratuito do Render BLOQUEIA as portas
+      Use 1, 2 ou 3 no Render: o plano gratuito do Render BLOQUEIA as portas
       de e-mail (SMTP 25/465/587) desde set/2025 — o Gmail não sai de lá.
-   3) SMTP_HOST/USER/PASS → SMTP comum (ex.: Gmail com senha de app),
+   4) SMTP_HOST/USER/PASS → SMTP comum (ex.: Gmail com senha de app),
       bom para rodar no seu computador ou num servidor pago.
-   Sem nenhum dos dois (desenvolvimento), o e-mail NÃO é enviado — o
+   Sem nenhum deles (desenvolvimento), o e-mail NÃO é enviado — o
    link de recuperação é só impresso no console, para testes manuais.
    ═══════════════════════════════════════════════════════════ */
 
 const nodemailer = require('nodemailer');
+const { OAuth2Client } = require('google-auth-library');
 
 const REMETENTE_PADRAO = '"Feira System" <no-reply@feirasystem.com>';
 
+const gmailClientId = process.env.GMAIL_CLIENT_ID || process.env.GOOGLE_CLIENT_ID;
+const gmailConfigurado = Boolean(gmailClientId && process.env.GMAIL_CLIENT_SECRET && process.env.GMAIL_REFRESH_TOKEN);
+/* O cliente guarda o access token e o renova sozinho (vale ~1h) a partir do refresh token */
+const clienteGmail = gmailConfigurado ? new OAuth2Client(gmailClientId, process.env.GMAIL_CLIENT_SECRET) : null;
+if (clienteGmail) clienteGmail.setCredentials({ refresh_token: process.env.GMAIL_REFRESH_TOKEN });
+
+/* Cabeçalho com acento ("Recuperação") precisa ir codificado (RFC 2047) */
+const cabecalhoUtf8 = (texto) => `=?UTF-8?B?${Buffer.from(String(texto), 'utf8').toString('base64')}?=`;
+
+/* Monta o e-mail no formato MIME que a Gmail API espera (base64url) */
+const montarMime = ({ de, para, assunto, html, responderPara }) => {
+  const { name, email } = separarRemetente(de);
+  const linhas = [
+    `From: ${cabecalhoUtf8(name)} <${email}>`,
+    `To: ${para}`,
+    ...(responderPara ? [`Reply-To: ${responderPara}`] : []),
+    `Subject: ${cabecalhoUtf8(assunto)}`,
+    'MIME-Version: 1.0',
+    'Content-Type: text/html; charset=UTF-8',
+    'Content-Transfer-Encoding: base64',
+    '',
+    Buffer.from(html, 'utf8').toString('base64').replace(/.{76}/g, '$&\r\n'),
+  ];
+  return Buffer.from(linhas.join('\r\n'), 'utf8').toString('base64url');
+};
+
+const emailjsConfigurado = Boolean(
+  process.env.EMAILJS_SERVICE_ID && process.env.EMAILJS_TEMPLATE_ID &&
+  process.env.EMAILJS_PUBLIC_KEY && process.env.EMAILJS_PRIVATE_KEY
+);
 const mailjetConfigurado = Boolean(process.env.MAILJET_API_KEY && process.env.MAILJET_SECRET_KEY);
 const brevoConfigurado = Boolean(process.env.BREVO_API_KEY);
 const smtpConfigurado = process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS;
@@ -51,9 +89,63 @@ const enviarEmail = async (dados) => {
   return Boolean(meio);
 };
 
-/* Devolve o nome do serviço usado ('Mailjet' | 'Brevo' | 'SMTP') ou null se nenhum está configurado */
+/* Devolve o nome do serviço usado ('Gmail API' | 'EmailJS' | 'Mailjet' | 'Brevo' | 'SMTP') ou null se nenhum está configurado */
 const enviarPorMeioConfigurado = async ({ para, assunto, html, responderPara }) => {
   const remetente = process.env.SMTP_FROM || REMETENTE_PADRAO;
+
+  if (gmailConfigurado) {
+    let token;
+    try {
+      ({ token } = await clienteGmail.getAccessToken());
+    } catch (err) {
+      /* invalid_grant = refresh token revogado/expirado (ex.: app voltou para
+         "Em teste" no Google, ou a senha da conta Google mudou): gere outro. */
+      throw new Error(`Gmail API: não foi possível renovar o acesso (${err.message}). Gere um novo GMAIL_REFRESH_TOKEN.`);
+    }
+    const resposta = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ raw: montarMime({ de: remetente, para, assunto, html, responderPara }) }),
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!resposta.ok) {
+      const detalhe = await resposta.text().catch(() => '');
+      /* 403 "Gmail API has not been used in project..." → ativar a Gmail API
+         no Google Cloud (APIs e serviços → Biblioteca → Gmail API → Ativar) */
+      throw new Error(`Gmail API respondeu HTTP ${resposta.status}: ${detalhe.slice(0, 300)}`);
+    }
+    return 'Gmail API';
+  }
+
+  if (emailjsConfigurado) {
+    /* O template no painel do EmailJS precisa usar estas variáveis:
+       To Email = {{to_email}} · Subject = {{subject}} · Reply To = {{reply_to}}
+       Content  = {{{html_content}}}  (3 chaves: o HTML não é escapado) */
+    const resposta = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        service_id: process.env.EMAILJS_SERVICE_ID,
+        template_id: process.env.EMAILJS_TEMPLATE_ID,
+        user_id: process.env.EMAILJS_PUBLIC_KEY,
+        accessToken: process.env.EMAILJS_PRIVATE_KEY,
+        template_params: {
+          to_email: para,
+          subject: assunto,
+          html_content: html,
+          reply_to: responderPara || separarRemetente(remetente).email,
+        },
+      }),
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!resposta.ok) {
+      const detalhe = await resposta.text().catch(() => '');
+      /* Erro mais comum (403): "API calls are disabled for non-browser
+         applications" → ligar em Account → Security no painel do EmailJS */
+      throw new Error(`EmailJS respondeu HTTP ${resposta.status}: ${detalhe.slice(0, 300)}`);
+    }
+    return 'EmailJS';
+  }
 
   if (mailjetConfigurado) {
     const { name, email } = separarRemetente(remetente);
@@ -130,10 +222,10 @@ const sendPasswordResetEmail = async (email, tokenBruto) => {
     /* ⭐ Em produção o token NUNCA vai para o log: quem lê os logs do servidor
        poderia redefinir a senha de qualquer cliente. */
     if (process.env.NODE_ENV === 'production') {
-      console.error(`❌ E-mail de recuperação para ${email} NÃO enviado: configure MAILJET_API_KEY e MAILJET_SECRET_KEY (ou BREVO_API_KEY / SMTP).`);
+      console.error(`❌ E-mail de recuperação para ${email} NÃO enviado: configure GMAIL_CLIENT_SECRET e GMAIL_REFRESH_TOKEN (ou EmailJS / Mailjet / Brevo / SMTP).`);
       return;
     }
-    console.log('\n📧 [DEV] Nenhum envio de e-mail configurado (Mailjet, Brevo ou SMTP) — e-mail não enviado de verdade.');
+    console.log('\n📧 [DEV] Nenhum envio de e-mail configurado (Gmail API, EmailJS, Mailjet, Brevo ou SMTP) — e-mail não enviado de verdade.');
     console.log(`📧 [DEV] Token de recuperação para ${email}: ${tokenBruto}`);
     console.log(`📧 [DEV] Link de redefinição: ${link}\n`);
   }

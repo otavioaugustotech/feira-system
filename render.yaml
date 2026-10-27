@@ -58,14 +58,15 @@ services:
         fromDatabase: { name: feira-system-db, property: database }
 
       # E-mail (recuperação de senha + aviso de leads).
-      # O plano free do Render BLOQUEIA SMTP (Gmail); por isso o envio é
-      # pela API do Mailjet (mailjet.com, grátis até 200/dia). As chaves
-      # ficam só no painel do Render (Mailjet → Account settings → API Key
-      # Management). SMTP_FROM precisa ser um remetente validado no Mailjet
-      # (Account settings → Senders & Domains).
-      - key: MAILJET_API_KEY
+      # O plano free do Render BLOQUEIA SMTP; por isso o envio é pela Gmail
+      # API oficial (HTTPS), no mesmo projeto "feira-system" do Google Cloud
+      # e com o mesmo cliente OAuth do login (GOOGLE_CLIENT_ID). Os dois
+      # valores abaixo ficam só no painel do Render: a "Chave secreta do
+      # cliente" (Google Auth Platform → Clientes) e o refresh token gerado
+      # no OAuth Playground com o escopo gmail.send (passo a passo no guia).
+      - key: GMAIL_CLIENT_SECRET
         sync: false
-      - key: MAILJET_SECRET_KEY
+      - key: GMAIL_REFRESH_TOKEN
         sync: false
       - key: SMTP_FROM
         value: "Feira System <otavioac01@gmail.com>"

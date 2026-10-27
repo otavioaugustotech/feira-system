@@ -113,8 +113,16 @@ const leadSchema = z.object({
   site: z.string().max(200).optional(),
 });
 
+/* ⭐ Admin muda o andamento do contato na tela "Contatos" */
+const leadStatusSchema = z.object({
+  status: z.enum(['novo', 'em_contato', 'convertido', 'descartado'], {
+    errorMap: () => ({ message: 'status inválido' }),
+  }),
+});
+
 module.exports = {
   leadSchema,
+  leadStatusSchema,
   vendaSchema,
   cancelarVendaSchema,
   produtoSchema,

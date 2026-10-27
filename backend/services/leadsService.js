@@ -73,4 +73,68 @@ const enviarWebhook = async (lead) => {
   if (!resposta.ok) throw new Error(`Webhook respondeu HTTP ${resposta.status}`);
 };
 
-module.exports = { criar };
+/* ══ ADMIN: LISTAR leads (⭐ tela "Contatos") ══
+   filtros = { status?, busca?, pagina, porPagina }
+   Devolve a página pedida + o total + quantos há em cada status (para
+   os contadores no topo da tela). */
+const STATUS = ['novo', 'em_contato', 'convertido', 'descartado'];
+
+const listar = async ({ status, busca, pagina = 1, porPagina = 20 } = {}) => {
+  const condicoes = [];
+  const valores = [];
+
+  if (status && STATUS.includes(status)) {
+    valores.push(status);
+    condicoes.push(`status = $${valores.length}`);
+  }
+  if (busca) {
+    valores.push(`%${busca}%`);
+    const p = `$${valores.length}`;
+    condicoes.push(`(nome ILIKE ${p} OR email ILIKE ${p} OR telefone ILIKE ${p} OR nome_banca ILIKE ${p})`);
+  }
+  const where = condicoes.length ? `WHERE ${condicoes.join(' AND ')}` : '';
+
+  const total = await db.query(`SELECT COUNT(*)::int AS total FROM leads ${where}`, valores);
+
+  const limite = Math.min(Math.max(Number(porPagina) || 20, 1), 100);
+  const paginaAtual = Math.max(Number(pagina) || 1, 1);
+  const itens = await db.query(
+    `SELECT id, nome, email, telefone, nome_banca, tipo, mensagem, origem, status, created_at
+       FROM leads ${where}
+      ORDER BY created_at DESC, id DESC
+      LIMIT ${limite} OFFSET ${(paginaAtual - 1) * limite}`,
+    valores
+  );
+
+  const porStatus = await db.query('SELECT status, COUNT(*)::int AS qtd FROM leads GROUP BY status');
+  const contagem = Object.fromEntries(STATUS.map((s) => [s, 0]));
+  porStatus.rows.forEach((r) => { contagem[r.status] = r.qtd; });
+
+  return {
+    itens: itens.rows,
+    total: total.rows[0].total,
+    pagina: paginaAtual,
+    total_paginas: Math.max(1, Math.ceil(total.rows[0].total / limite)),
+    contagem,
+  };
+};
+
+/* ══ ADMIN: mudar o status (novo → em_contato → convertido/descartado) ══ */
+const atualizarStatus = async (id, status) => {
+  const res = await db.query(
+    `UPDATE leads SET status = $1 WHERE id = $2
+     RETURNING id, nome, email, telefone, nome_banca, tipo, mensagem, origem, status, created_at`,
+    [status, id]
+  );
+  if (res.rows.length === 0) throw new Error('LEAD_NAO_ENCONTRADO');
+  return res.rows[0];
+};
+
+/* ══ ADMIN: excluir (ex.: pedido de exclusão pela LGPD, ou spam) ══ */
+const remover = async (id) => {
+  const res = await db.query('DELETE FROM leads WHERE id = $1 RETURNING id', [id]);
+  if (res.rows.length === 0) throw new Error('LEAD_NAO_ENCONTRADO');
+  return { id: res.rows[0].id };
+};
+
+module.exports = { criar, listar, atualizarStatus, remover, STATUS };

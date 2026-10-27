@@ -11,6 +11,7 @@ const jwt      = require('jsonwebtoken');
 const crypto   = require('crypto');
 const { OAuth2Client } = require('google-auth-library');
 const { sendPasswordResetEmail } = require('../utils/emailService');
+const { comPapel } = require('../utils/admin'); /* ⭐ marca admin: true/false no usuário devolvido */
 
 /* ══ REGISTRAR novo usuário (mantido) ══ */
 const registrar = async (nome, email, senha, nomeBanca) => {
@@ -28,7 +29,7 @@ const registrar = async (nome, email, senha, nomeBanca) => {
 
   const novoUsuario = resultado.rows[0];
   const token = gerarToken(novoUsuario);
-  return { usuario: novoUsuario, token };
+  return { usuario: comPapel(novoUsuario), token };
 };
 
 /* ══ LOGIN (mantido) ══ */
@@ -50,7 +51,7 @@ const login = async (email, senha) => {
 
   const token = gerarToken(usuario);
   delete usuario.senha_hash;
-  return { usuario, token };
+  return { usuario: comPapel(usuario), token };
 };
 
 /* ══ LOGIN / CADASTRO COM GOOGLE (⭐ NOVO) ══
@@ -130,7 +131,7 @@ const loginGoogle = async (credential) => {
     usuario = comFoto.rows[0];
   }
 
-  return { usuario, token: gerarToken(usuario), novo };
+  return { usuario: comPapel(usuario), token: gerarToken(usuario), novo };
 };
 
 const gerarToken = (usuario) => {
@@ -245,7 +246,7 @@ const CAMPOS_PERFIL = 'id, nome, email, nome_banca, foto_url, created_at, (senha
 const obterPerfil = async (usuarioId) => {
   const res = await db.query(`SELECT ${CAMPOS_PERFIL} FROM usuarios WHERE id = $1`, [usuarioId]);
   if (res.rows.length === 0) throw new Error('USUARIO_NAO_ENCONTRADO');
-  return res.rows[0];
+  return comPapel(res.rows[0]);
 };
 
 /* Atualiza nome, nome da banca e/ou foto.
@@ -269,7 +270,7 @@ const atualizarPerfil = async (usuarioId, { nome, nome_banca, foto }) => {
 
   const usuario = res.rows[0];
   /* O token guarda o nome — geramos um novo para ele ficar atualizado */
-  return { usuario, token: gerarToken(usuario) };
+  return { usuario: comPapel(usuario), token: gerarToken(usuario) };
 };
 
 module.exports = {

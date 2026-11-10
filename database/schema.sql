@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS produtos (
     preco_venda     NUMERIC(12,2)  NOT NULL CHECK (preco_venda >= 0),
     quantidade      NUMERIC(12,3)  NOT NULL DEFAULT 0 CHECK (quantidade >= 0),
     estoque_minimo  NUMERIC(12,3)  NOT NULL DEFAULT 5,
+    imagem          TEXT,          /* foto do produto em base64, reduzida no navegador */
     ativo           BOOLEAN        NOT NULL DEFAULT TRUE,
     created_at      TIMESTAMP      NOT NULL DEFAULT NOW()
 );

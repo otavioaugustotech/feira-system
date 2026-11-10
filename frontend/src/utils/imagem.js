@@ -18,6 +18,16 @@ export function validarArquivoImagem(arquivo) {
 }
 
 export function prepararFotoPerfil(arquivo) {
+  return recortarQuadrado(arquivo, TAMANHO_FINAL);
+}
+
+/* ⭐ Imagem do produto: mesmo recorte quadrado, um pouco maior (320x320),
+   para aparecer nítida no cadastro e na lista de produtos (~20-40 KB). */
+export function prepararImagemProduto(arquivo) {
+  return recortarQuadrado(arquivo, 320);
+}
+
+function recortarQuadrado(arquivo, TAMANHO_FINAL) {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(arquivo);
     const img = new Image();

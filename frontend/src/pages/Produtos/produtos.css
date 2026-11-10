@@ -1,1 +1,103 @@
+/* ⭐ Imagem do produto — campo do cadastro e miniatura da lista */
+.campo-imagem-rotulo {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--texto);
+}
+.campo-imagem-corpo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.campo-imagem-quadro {
+  width: 112px;
+  height: 112px;
+  flex-shrink: 0;
+  border-radius: 20px;
+  border: 2px dashed var(--borda-campo);
+  background: var(--vidro-forte);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--vidro-brilho);
+  color: var(--texto-secundario);
+  cursor: pointer;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+.campo-imagem-quadro:hover,
+.campo-imagem-quadro.arrastando {
+  border-color: var(--laranja);
+  box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.15), var(--vidro-brilho);
+}
+.campo-imagem-quadro.com-imagem {
+  border-style: solid;
+  border-color: var(--vidro-borda);
+}
+.campo-imagem-quadro img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.campo-imagem-vazio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.campo-imagem-vazio svg {
+  color: var(--roxo-escuro);
+}
+.campo-imagem-acoes {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  flex: 1;
+  min-width: 200px;
+}
+.campo-imagem-acoes .dica,
+.campo-imagem-acoes .erro-msg {
+  margin: 0;
+}
+.campo-imagem-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
 
+/* Miniatura na lista de produtos */
+.produto-nome-celula {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  font-weight: 600;
+}
+.produto-miniatura {
+  flex-shrink: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--verde-claro), var(--azul-claro) 55%, var(--roxo-claro));
+  color: var(--roxo-escuro);
+  font-weight: 800;
+  font-size: 1rem;
+  border: 1px solid var(--vidro-borda);
+  box-shadow: var(--vidro-brilho);
+}
+.produto-miniatura img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}

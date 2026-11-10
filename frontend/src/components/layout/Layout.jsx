@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar.jsx';
 import Header from './Header.jsx';
@@ -16,18 +16,31 @@ const TITULOS = {
   '/perfil': 'Perfil',
 };
 
+const CHAVE_RECOLHIDO = 'feira-system:menu-recolhido';
+
 export default function Layout() {
   const [menuAberto, setMenuAberto] = useState(false);
   const [painelAberto, setPainelAberto] = useState(false);
+  /* ⭐ Menu lateral recolhido (só ícones) no computador; a escolha fica salva */
+  const [recolhido, setRecolhido] = useState(() => localStorage.getItem(CHAVE_RECOLHIDO) === 'true');
   const { pathname } = useLocation();
+
+  useEffect(() => {
+    localStorage.setItem(CHAVE_RECOLHIDO, String(recolhido));
+  }, [recolhido]);
 
   const titulo = TITULOS[pathname] || 'Feira System';
 
   return (
-    <div className="app-layout">
+    <div className={`app-layout ${recolhido ? 'menu-recolhido' : ''}`}>
       <a href="#conteudo-principal" className="skip-link">Pular para o conteúdo principal</a>
 
-      <Sidebar aberta={menuAberto} onFechar={() => setMenuAberto(false)} />
+      <Sidebar
+        aberta={menuAberto}
+        onFechar={() => setMenuAberto(false)}
+        recolhido={recolhido}
+        onAlternarRecolhido={() => setRecolhido((v) => !v)}
+      />
 
       <div className="app-conteudo">
         <Header

@@ -15,7 +15,10 @@ import { useToast } from '../../hooks/useToast.js';
 import { extrairMensagemErro } from '../../services/api.js';
 import { formatarMoeda, formatarNumero, formatarQuantidade, rotuloTipoVenda } from '../../utils/formatters.js';
 import CampoImagemProduto, { MiniaturaProduto } from './CampoImagemProduto.jsx';
+import { opcoesCategorias } from '../../utils/categoriasProduto.js';
 import '../shared/list-page.css';
+
+const OUTRA_CATEGORIA = '__outra__';
 
 const FORM_VAZIO = {
   nome: '', categoria: '', tipo_venda: 'unidade',
@@ -71,9 +74,26 @@ export default function Produtos() {
     });
   }, [produtos, busca, filtroCategoria]);
 
+  /* ⭐ Categoria escolhida numa lista de categorias de feira (+ as que o
+     feirante já usa). "Outra (digitar)" abre um campo para digitar. */
+  const [categoriaDigitada, setCategoriaDigitada] = useState(false);
+  const listaCategorias = useMemo(() => opcoesCategorias(categorias), [categorias]);
+
+  const escolherCategoria = (e) => {
+    const valor = e.target.value;
+    if (valor === OUTRA_CATEGORIA) {
+      setCategoriaDigitada(true);
+      setForm((f) => ({ ...f, categoria: '' }));
+    } else {
+      setCategoriaDigitada(false);
+      setForm((f) => ({ ...f, categoria: valor }));
+    }
+  };
+
   const abrirCriar = () => {
     setEditando(null);
     setForm(FORM_VAZIO);
+    setCategoriaDigitada(false);
     setErrosForm({});
     setModalAberto(true);
   };
@@ -90,6 +110,7 @@ export default function Produtos() {
       estoque_minimo: produto.estoque_minimo != null ? Number(produto.estoque_minimo) : '5',
       imagem: produto.imagem || null,
     });
+    setCategoriaDigitada(false);
     setErrosForm({});
     setModalAberto(true);
   };
@@ -257,7 +278,16 @@ export default function Produtos() {
           />
           <Input label="Nome do produto" obrigatorio value={form.nome} onChange={atualizarCampo('nome')} erro={errosForm.nome} />
           <div className="form-grid-2">
-            <Input label="Categoria" value={form.categoria} onChange={atualizarCampo('categoria')} dica="Opcional" />
+            <Select
+              label="Categoria"
+              value={categoriaDigitada ? OUTRA_CATEGORIA : form.categoria}
+              onChange={escolherCategoria}
+              dica="Opcional"
+            >
+              <option value="">Sem categoria</option>
+              {listaCategorias.map((c) => <option key={c} value={c}>{c}</option>)}
+              <option value={OUTRA_CATEGORIA}>Outra (digitar)…</option>
+            </Select>
             <Select label="Tipo de venda" value={form.tipo_venda} onChange={atualizarCampo('tipo_venda')}>
               <option value="unidade">Unidade</option>
               <option value="kg">Quilo (kg)</option>
@@ -265,6 +295,16 @@ export default function Produtos() {
               <option value="caixa">Caixa</option>
             </Select>
           </div>
+          {categoriaDigitada && (
+            <Input
+              label="Nome da nova categoria"
+              value={form.categoria}
+              onChange={atualizarCampo('categoria')}
+              placeholder="Ex.: Cogumelos"
+              dica="Depois de salva, ela também aparece na lista para os próximos produtos."
+              autoFocus
+            />
+          )}
           <div className="form-grid-2">
             <Input label="Preço de custo (R$)" type="number" min="0" step="0.01" obrigatorio value={form.preco_custo} onChange={atualizarCampo('preco_custo')} erro={errosForm.preco_custo} />
             <Input label="Preço de venda (R$)" type="number" min="0" step="0.01" obrigatorio value={form.preco_venda} onChange={atualizarCampo('preco_venda')} erro={errosForm.preco_venda} />

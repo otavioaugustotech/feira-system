@@ -1,7 +1,10 @@
 /* ⭐ NOVO — barra de filtros dos indicadores e explicação de cálculo */
 .filtros-indicadores {
-  background: var(--superficie);
-  border: 1px solid var(--borda);
+  background: var(--vidro);
+  -webkit-backdrop-filter: var(--vidro-blur);
+  backdrop-filter: var(--vidro-blur);
+  border: 1px solid var(--vidro-borda);
+  box-shadow: var(--sombra), var(--vidro-brilho);
   border-radius: var(--raio-lg);
   padding: 0.9rem 1rem 0.2rem;
   margin-bottom: 1.25rem;

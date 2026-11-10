@@ -1,8 +1,9 @@
 import { Bar } from 'react-chartjs-2';
 import { useReducedMotionEfetivo } from '../../hooks/useReducedMotion.js';
-import './chartSetup.js';
+import { gradienteVertical } from './chartSetup.js';
 
-export default function BarChart({ labels, dataset, cor = '#3b82f6', rotulo = 'Valor' }) {
+/* Sem cor informada, as barras usam um gradiente azul → roxo (Liquid Glass). */
+export default function BarChart({ labels, dataset, cor, rotulo = 'Valor' }) {
   const semAnimacao = useReducedMotionEfetivo();
   const dados = {
     labels,
@@ -10,8 +11,9 @@ export default function BarChart({ labels, dataset, cor = '#3b82f6', rotulo = 'V
       {
         label: rotulo,
         data: dataset,
-        backgroundColor: cor,
-        borderRadius: 6,
+        backgroundColor: cor || ((ctx) => gradienteVertical(ctx, ['#3b82f6', '#8b5cf6'])),
+        borderRadius: 10,
+        borderSkipped: false,
         maxBarThickness: 40,
       },
     ],

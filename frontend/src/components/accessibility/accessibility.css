@@ -5,43 +5,51 @@
   width: 58px;
   height: 58px;
   border-radius: 50%;
-  background: var(--verde-escuro);
+  background: var(--gradiente-marca);
   color: #fff;
-  border: 3px solid #fff;
-  box-shadow: var(--sombra-lg);
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 12px 28px rgba(29, 78, 216, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: grab;
   touch-action: none;
+  transition: box-shadow 0.2s ease, background 0.2s ease;
 }
 .a11y-fab:hover {
-  background: var(--verde);
+  background: var(--gradiente-marca-hover);
+  box-shadow: 0 14px 32px rgba(29, 78, 216, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 .a11y-fab:active {
   cursor: grabbing;
 }
 .a11y-fab[aria-expanded='true'] {
-  background: var(--navy);
+  background: linear-gradient(120deg, #ea580c, #c2410c);
 }
 
 /* ═══ Painel ═══ */
 .a11y-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(10, 18, 29, 0.45);
+  background: rgba(31, 35, 41, 0.25);
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
   z-index: 2600;
 }
 .a11y-painel {
   position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: min(400px, 100vw);
-  background: var(--superficie);
+  top: 12px;
+  right: 12px;
+  bottom: 12px;
+  width: min(400px, calc(100vw - 24px));
+  background: var(--vidro-forte);
+  -webkit-backdrop-filter: var(--vidro-blur);
+  backdrop-filter: var(--vidro-blur);
+  border: 1px solid var(--vidro-borda);
+  border-radius: var(--raio-lg);
   color: var(--texto);
   z-index: 2601;
-  box-shadow: var(--sombra-lg);
+  box-shadow: var(--sombra-lg), var(--vidro-brilho);
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -49,7 +57,7 @@
 }
 .a11y-painel.posicao-esquerda {
   right: auto;
-  left: 0;
+  left: 12px;
 }
 .a11y-painel-header {
   display: flex;
@@ -92,21 +100,22 @@
   align-items: center;
   gap: 0.25rem;
   padding: 0.6rem 0.4rem;
-  border-radius: 10px;
-  border: 2px solid var(--borda);
-  background: var(--superficie);
+  border-radius: 14px;
+  border: 1px solid var(--borda-campo);
+  background: var(--vidro);
   color: var(--texto);
   cursor: pointer;
   font-weight: 700;
   font-size: 0.8rem;
   min-height: 56px;
+  box-shadow: var(--vidro-brilho);
 }
 .a11y-opcao-btn:hover {
-  border-color: var(--verde);
+  border-color: var(--laranja);
 }
 .a11y-opcao-btn[aria-pressed='true'] {
-  background: var(--verde-escuro);
-  border-color: var(--verde-escuro);
+  background: var(--gradiente-marca);
+  border-color: transparent;
   color: #fff;
 }
 .a11y-opcao-btn .rotulo-pequeno {
@@ -141,8 +150,8 @@
   cursor: pointer;
 }
 .a11y-switch[aria-checked='true'] {
-  background: var(--verde-escuro);
-  border-color: var(--verde-escuro);
+  background: var(--gradiente-marca);
+  border-color: transparent;
 }
 .a11y-switch-bolinha {
   position: absolute;
@@ -174,6 +183,6 @@
 
 @media (max-width: 480px) {
   .a11y-painel {
-    width: 100vw;
+    width: calc(100vw - 24px);
   }
 }

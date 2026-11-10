@@ -7,7 +7,7 @@ const CANTOS = {
   'top-right': { top: 96, right: 24 },
   'bottom-right': { bottom: 24, right: 24 },
   'top-left': { top: 96, left: 24 },
-  'bottom-left': { bottom: 24, left: 24 },
+  'bottom-left': { bottom: 96, left: 24 }, /* acima do "Sair" do menu lateral */
 };
 
 /**

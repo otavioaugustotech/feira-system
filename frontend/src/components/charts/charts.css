@@ -16,19 +16,20 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  background: var(--fundo);
-  border: 1px solid var(--borda);
+  background: var(--vidro-forte);
+  border: 1px solid var(--borda-campo);
   color: var(--texto-secundario);
-  padding: 0.4rem 0.7rem;
-  border-radius: 8px;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
   min-height: 36px;
+  box-shadow: var(--vidro-brilho);
 }
 .chart-toggle-btn:hover {
-  border-color: var(--verde-escuro);
-  color: var(--verde-escuro);
+  border-color: var(--laranja);
+  color: var(--texto);
 }
 .chart-canvas-area {
   position: relative;

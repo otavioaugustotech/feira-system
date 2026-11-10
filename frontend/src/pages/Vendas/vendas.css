@@ -13,9 +13,10 @@
   list-style: none;
   margin: 1rem 0;
   padding: 0;
-  border: 1px solid var(--borda);
+  border: 1px solid var(--vidro-borda);
   border-radius: var(--raio);
   overflow: hidden;
+  background: var(--fundo);
 }
 .carrinho-item {
   display: flex;

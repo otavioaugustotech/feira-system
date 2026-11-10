@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import './ui.css';
 
@@ -59,7 +60,10 @@ export default function Modal({ aberto, titulo, onFechar, children, tamanho }) {
 
   if (!aberto) return null;
 
-  return (
+  /* ⭐ Renderiza no <body> (portal): os cartões de vidro usam backdrop-filter,
+     que "prende" elementos position:fixed dentro deles. Pelo portal, a janela
+     sempre cobre a tela inteira, mesmo quando é aberta de dentro de um cartão. */
+  return createPortal(
     <div className="modal-overlay" onMouseDown={(e) => e.target === e.currentTarget && onFechar()}>
       <div
         className="modal"
@@ -77,6 +81,7 @@ export default function Modal({ aberto, titulo, onFechar, children, tamanho }) {
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

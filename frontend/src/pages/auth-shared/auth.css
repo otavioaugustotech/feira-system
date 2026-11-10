@@ -4,15 +4,18 @@
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
-  background: linear-gradient(160deg, var(--navy) 0%, var(--verde-escuro) 100%);
+  /* o fundo em gradiente claro vem do body (Liquid Glass) */
 }
 .auth-cartao {
   width: 100%;
   max-width: 440px;
-  background: var(--superficie);
-  border-radius: var(--raio-lg);
-  box-shadow: var(--sombra-lg);
-  padding: 2rem;
+  background: var(--vidro);
+  -webkit-backdrop-filter: var(--vidro-blur);
+  backdrop-filter: var(--vidro-blur);
+  border: 1px solid var(--vidro-borda);
+  border-radius: 28px;
+  box-shadow: var(--sombra-lg), var(--vidro-brilho);
+  padding: 2.25rem 2rem 2rem;
 }
 .auth-marca {
   display: flex;
@@ -21,8 +24,17 @@
   justify-content: center;
   font-weight: 800;
   font-size: 1.35rem;
-  color: var(--verde-escuro);
+  color: var(--texto);
   margin-bottom: 1.5rem;
+}
+.auth-marca svg {
+  color: #fff;
+  background: var(--gradiente-marca);
+  border-radius: 12px;
+  padding: 6px;
+  width: 40px;
+  height: 40px;
+  box-shadow: 0 8px 18px rgba(29, 78, 216, 0.3);
 }
 .auth-titulo {
   font-size: 1.4rem;
@@ -74,9 +86,9 @@
 .auth-google-aviso {
   margin: 0 0 0.5rem;
   padding: 0.65rem 0.85rem;
-  border: 1px solid var(--borda);
+  border: 1px solid var(--vidro-borda);
   border-radius: var(--raio);
-  background: var(--fundo);
+  background: var(--vidro-forte);
   color: var(--texto-secundario);
   font-size: 0.85rem;
   line-height: 1.45;

@@ -133,7 +133,7 @@ export default function Relatorios() {
               />
             </Card>
             <Card className="rel-kpi rel-kpi-lucro">
-              <TrendingUp size={20} aria-hidden="true" style={{ color: 'var(--azul)' }} />
+              <TrendingUp size={20} aria-hidden="true" style={{ color: 'var(--azul-escuro)' }} />
               <p>Lucro líquido</p>
               <p className="rel-kpi-valor">{formatarMoeda(resumo?.lucro_liquido)}</p>
               <ComoCalculado
@@ -143,7 +143,7 @@ export default function Relatorios() {
               />
             </Card>
             <Card className="rel-kpi rel-kpi-ticket">
-              <ShoppingBag size={20} aria-hidden="true" style={{ color: 'var(--roxo)' }} />
+              <ShoppingBag size={20} aria-hidden="true" style={{ color: 'var(--roxo-escuro)' }} />
               <p>Ticket médio</p>
               <p className="rel-kpi-valor">{formatarMoeda(kpis?.ticket_medio)}</p>
               <ComoCalculado
@@ -153,7 +153,7 @@ export default function Relatorios() {
               />
             </Card>
             <Card className="rel-kpi rel-kpi-desperdicio">
-              <Percent size={20} aria-hidden="true" style={{ color: 'var(--vermelho)' }} />
+              <Percent size={20} aria-hidden="true" style={{ color: 'var(--laranja-escuro)' }} />
               <p>Taxa de desperdício</p>
               <p className="rel-kpi-valor">{formatarPercentual(kpis?.taxa_desperdicio)}</p>
               <ComoCalculado

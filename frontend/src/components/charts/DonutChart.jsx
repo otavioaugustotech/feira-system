@@ -2,7 +2,8 @@ import { Doughnut } from 'react-chartjs-2';
 import { useReducedMotionEfetivo } from '../../hooks/useReducedMotion.js';
 import './chartSetup.js';
 
-const PALETA = ['#16a05c', '#3b82f6', '#8b5cf6', '#f97316', '#f59e0b', '#ef4444'];
+/* Paleta Liquid Glass: verde, azul, roxo, laranja (destaque) e dois tons de apoio */
+const PALETA = ['#10b981', '#3b82f6', '#8b5cf6', '#f97316', '#14b8a6', '#ec4899'];
 
 export default function DonutChart({ labels, dataset, cores }) {
   const semAnimacao = useReducedMotionEfetivo();
@@ -12,8 +13,10 @@ export default function DonutChart({ labels, dataset, cores }) {
       {
         data: dataset,
         backgroundColor: cores || PALETA,
-        borderWidth: 2,
-        borderColor: '#fff',
+        borderWidth: 3,
+        borderColor: 'rgba(255, 255, 255, 0.9)',
+        borderRadius: 6,
+        hoverOffset: 6,
       },
     ],
   };

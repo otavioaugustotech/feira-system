@@ -63,7 +63,7 @@ export default function Header({ titulo, onAbrirMenu, onAbrirAcessibilidade }) {
                 position: 'absolute',
                 top: 4,
                 right: 4,
-                background: 'var(--vermelho)',
+                background: '#c2410c',
                 color: '#fff',
                 fontSize: 10,
                 fontWeight: 800,

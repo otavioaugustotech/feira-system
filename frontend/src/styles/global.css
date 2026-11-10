@@ -16,13 +16,60 @@ html {
 body {
   margin: 0;
   font-family: var(--fonte);
-  background: var(--fundo);
+  /* ⭐ Liquid Glass: fundo claro com gradiente verde → azul → roxo */
+  background: var(--gradiente-fundo);
+  background-attachment: fixed;
   color: var(--texto);
   line-height: calc(1.5 * var(--escala-linha));
   letter-spacing: calc(var(--escala-letra) * 1px);
   word-spacing: calc(var(--escala-palavra) * 1px);
   -webkit-font-smoothing: antialiased;
   transition: background-color 0.2s ease, color 0.2s ease;
+  min-height: 100vh;
+}
+
+/* "Bolhas" de cor que flutuam devagar atrás do vidro (efeito fluido).
+   São decorativas: ficam atrás de tudo e não recebem clique. */
+body::before,
+body::after {
+  content: '';
+  position: fixed;
+  z-index: -1;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.55;
+  pointer-events: none;
+  animation: flutuar 26s ease-in-out infinite alternate;
+}
+body::before {
+  width: 42vw;
+  height: 42vw;
+  top: -12vw;
+  left: 18vw;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.45), rgba(59, 130, 246, 0.25) 60%, transparent 72%);
+}
+body::after {
+  width: 38vw;
+  height: 38vw;
+  bottom: -14vw;
+  right: 8vw;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.42), rgba(249, 115, 22, 0.14) 60%, transparent 72%);
+  animation-duration: 32s;
+  animation-direction: alternate-reverse;
+}
+@keyframes flutuar {
+  0%   { transform: translate(0, 0) scale(1); }
+  50%  { transform: translate(6vw, 4vw) scale(1.12); }
+  100% { transform: translate(-4vw, 7vw) scale(0.95); }
+}
+
+/* Utilitário de vidro reaproveitado por cartões, menus e janelas */
+.vidro {
+  background: var(--vidro);
+  -webkit-backdrop-filter: var(--vidro-blur);
+  backdrop-filter: var(--vidro-blur);
+  border: 1px solid var(--vidro-borda);
+  box-shadow: var(--sombra), var(--vidro-brilho);
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -37,7 +84,10 @@ p {
 }
 
 a {
-  color: var(--verde-escuro);
+  color: var(--azul-escuro);
+}
+:root[data-tema='escuro'] a {
+  color: #93b4ff;
 }
 
 button {
@@ -80,7 +130,7 @@ table {
   left: -9999px;
   top: 0;
   z-index: 10000;
-  background: var(--verde-escuro);
+  background: var(--grafite);
   color: #fff;
   padding: 0.75rem 1.25rem;
   border-radius: 0 0 8px 0;
@@ -100,6 +150,6 @@ table {
 }
 
 ::selection {
-  background: var(--verde);
+  background: #6d28d9;
   color: #fff;
 }

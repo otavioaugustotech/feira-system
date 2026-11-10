@@ -212,7 +212,7 @@ export default function Dashboard() {
         </Card>
 
         <Card className="dash-kpi-card dash-kpi-lucro">
-          <span className="dash-kpi-icone" style={{ background: 'var(--azul-claro)', color: 'var(--azul)' }}>
+          <span className="dash-kpi-icone" style={{ background: 'var(--azul-claro)', color: 'var(--azul-escuro)' }}>
             <TrendingUp size={22} aria-hidden="true" />
           </span>
           <div className="dash-kpi-texto">
@@ -228,7 +228,7 @@ export default function Dashboard() {
         </Card>
 
         <Card className="dash-kpi-card dash-kpi-ticket">
-          <span className="dash-kpi-icone" style={{ background: 'var(--roxo-claro)', color: 'var(--roxo)' }}>
+          <span className="dash-kpi-icone" style={{ background: 'var(--roxo-claro)', color: 'var(--roxo-escuro)' }}>
             <ShoppingCart size={22} aria-hidden="true" />
           </span>
           <div className="dash-kpi-texto">
@@ -243,7 +243,7 @@ export default function Dashboard() {
         </Card>
 
         <Card className="dash-kpi-card dash-kpi-desperdicio">
-          <span className="dash-kpi-icone" style={{ background: 'var(--vermelho-claro)', color: 'var(--vermelho)' }}>
+          <span className="dash-kpi-icone" style={{ background: 'var(--laranja-claro)', color: 'var(--laranja-escuro)' }}>
             <Trash2 size={22} aria-hidden="true" />
           </span>
           <div className="dash-kpi-texto">

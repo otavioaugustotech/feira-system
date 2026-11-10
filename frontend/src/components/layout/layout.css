@@ -1,64 +1,88 @@
-/* ═══ Sidebar ═══ */
+/* ═══ Sidebar — painel de vidro flutuante ═══ */
 .sidebar {
   position: fixed;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  width: var(--sidebar-largura);
-  background: var(--navy);
-  color: #eaf1ec;
+  top: 12px;
+  left: 12px;
+  bottom: 12px;
+  width: calc(var(--sidebar-largura) - 24px);
+  background: var(--vidro);
+  -webkit-backdrop-filter: var(--vidro-blur);
+  backdrop-filter: var(--vidro-blur);
+  border: 1px solid var(--vidro-borda);
+  border-radius: var(--raio-lg);
+  box-shadow: var(--sombra), var(--vidro-brilho);
+  color: var(--texto);
   display: flex;
   flex-direction: column;
   z-index: 200;
-  transition: transform 0.2s ease;
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  overflow: hidden;
 }
 .sidebar-marca {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  padding: 1.35rem 1.25rem;
+  padding: 1.25rem 1.25rem;
   font-weight: 800;
   font-size: 1.15rem;
-  color: #fff;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--texto);
+  border-bottom: 1px solid var(--borda);
 }
 .sidebar-marca .icone-marca {
-  color: var(--verde);
+  color: #fff;
+  background: var(--gradiente-marca);
+  border-radius: 10px;
+  padding: 5px;
+  width: 34px;
+  height: 34px;
+  box-shadow: 0 6px 16px rgba(29, 78, 216, 0.3);
 }
 .sidebar-nav {
   flex: 1;
   overflow-y: auto;
-  padding: 0.75rem 0.75rem;
+  padding: 0.75rem 0.65rem;
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.25rem;
 }
 .sidebar-link {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 0.75rem;
   padding: 0.7rem 0.85rem;
-  border-radius: 10px;
-  color: #c7d6cc;
+  border-radius: 14px;
+  color: var(--texto-secundario);
   text-decoration: none;
   font-weight: 600;
   font-size: 0.9375rem;
-  border-left: 4px solid transparent;
   min-height: 44px;
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 .sidebar-link:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: #fff;
+  background: var(--vidro-forte);
+  color: var(--texto);
 }
+/* Item ativo: "pílula" com o gradiente da marca e marcador laranja */
 .sidebar-link.ativo {
-  background: rgba(22, 160, 92, 0.18);
+  background: var(--gradiente-marca);
   color: #fff;
-  border-left-color: var(--verde);
   font-weight: 700;
+  box-shadow: 0 8px 20px rgba(29, 78, 216, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.sidebar-link.ativo::after {
+  content: '';
+  position: absolute;
+  right: 12px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--laranja);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.85);
 }
 .sidebar-rodape {
-  padding: 0.9rem 0.75rem 1.1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.9rem 0.65rem 1rem;
+  border-top: 1px solid var(--borda);
 }
 .sidebar-sair {
   display: flex;
@@ -66,17 +90,17 @@
   gap: 0.75rem;
   width: 100%;
   padding: 0.7rem 0.85rem;
-  border-radius: 10px;
+  border-radius: 14px;
   background: transparent;
   border: none;
-  color: #ffb4b4;
+  color: var(--perigo-texto);
   font-weight: 700;
   cursor: pointer;
   font-size: 0.9375rem;
   min-height: 44px;
 }
 .sidebar-sair:hover {
-  background: rgba(239, 68, 68, 0.15);
+  background: var(--vermelho-claro);
 }
 .sidebar-overlay {
   display: none;
@@ -84,8 +108,9 @@
 
 @media (max-width: 960px) {
   .sidebar {
-    transform: translateX(-100%);
-    box-shadow: var(--sombra-lg);
+    transform: translateX(calc(-100% - 24px));
+    background: var(--vidro-forte);
+    box-shadow: var(--sombra-lg), var(--vidro-brilho);
   }
   .sidebar.aberta {
     transform: translateX(0);
@@ -94,23 +119,30 @@
     display: block;
     position: fixed;
     inset: 0;
-    background: rgba(10, 18, 29, 0.5);
+    background: rgba(31, 35, 41, 0.28);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
     z-index: 190;
   }
 }
 
-/* ═══ Header ═══ */
+/* ═══ Header — barra de vidro ═══ */
 .app-header {
   position: sticky;
-  top: 0;
+  top: 12px;
   z-index: 150;
   height: var(--header-altura);
-  background: var(--superficie);
-  border-bottom: 1px solid var(--borda);
+  margin: 12px 1.5rem 0;
+  background: var(--vidro);
+  -webkit-backdrop-filter: var(--vidro-blur);
+  backdrop-filter: var(--vidro-blur);
+  border: 1px solid var(--vidro-borda);
+  border-radius: var(--raio-lg);
+  box-shadow: var(--sombra), var(--vidro-brilho);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 1.25rem;
+  padding: 0 1rem 0 1.25rem;
   gap: 1rem;
 }
 .header-esquerda {
@@ -121,9 +153,9 @@
 }
 .header-menu-btn {
   display: none;
-  background: transparent;
+  background: var(--vidro-forte);
   border: 1px solid var(--borda);
-  border-radius: 8px;
+  border-radius: 12px;
   min-height: 42px;
   min-width: 42px;
   align-items: center;
@@ -147,7 +179,7 @@
 .header-icon-btn {
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 10px;
+  border-radius: 14px;
   min-height: 44px;
   min-width: 44px;
   display: flex;
@@ -156,10 +188,12 @@
   color: var(--texto-secundario);
   cursor: pointer;
   position: relative;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 .header-icon-btn:hover {
-  background: var(--fundo);
-  color: var(--verde-escuro);
+  background: var(--vidro-forte);
+  border-color: var(--vidro-borda);
+  color: var(--texto);
 }
 .header-usuario {
   display: flex;
@@ -167,19 +201,22 @@
   gap: 0.6rem;
   text-decoration: none;
   color: var(--texto);
-  padding: 0.3rem 0.6rem 0.3rem 0.3rem;
+  padding: 0.3rem 0.7rem 0.3rem 0.3rem;
   border-radius: 999px;
   min-height: 44px;
+  border: 1px solid transparent;
+  transition: background-color 0.2s ease;
 }
 .header-usuario:hover {
-  background: var(--fundo);
+  background: var(--vidro-forte);
+  border-color: var(--vidro-borda);
 }
 .header-avatar {
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: var(--verde-claro);
-  color: var(--verde-escuro);
+  background: var(--gradiente-marca);
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -210,6 +247,10 @@
   .header-menu-btn {
     display: flex;
   }
+  .app-header {
+    margin: 10px 0.75rem 0;
+    top: 10px;
+  }
 }
 
 /* ═══ App layout ═══ */
@@ -232,5 +273,8 @@
 @media (max-width: 960px) {
   .app-conteudo {
     margin-left: 0;
+  }
+  .app-main {
+    padding: 1.25rem 0.75rem 3rem;
   }
 }

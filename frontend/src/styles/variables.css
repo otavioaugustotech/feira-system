@@ -1,29 +1,65 @@
 :root {
-  /* Paleta — Feira System */
-  --navy: #0f1b2b;
-  --navy-dark: #0a121d;
-  --verde: #16a05c;
-  --verde-escuro: #0d7a44;
-  --verde-claro: #d1f0e1;
-  --fundo: #f3f8f5;
-  --superficie: #ffffff;
-  --branco: #ffffff;
-  --texto: #0f1f17;
-  --texto-secundario: #3d6b52;
-  --borda: #dfe9e3;
-  --amarelo: #f59e0b;
+  /* ═══ Paleta — Feira System · Liquid Glass (modo claro) ═══
+     Cores principais: verde, azul e roxo claros em gradiente, fundo claro.
+     Destaque: laranja. Neutros: branco e preto grafite. */
+  --grafite: #1f2329;
+  --grafite-suave: #3a404a;
+  --navy: var(--grafite);        /* nome antigo, mantido para compatibilidade */
+  --navy-dark: #15181d;
+
+  /* Tons claros que formam o gradiente de fundo */
+  --verde-gelo: #d9f7e8;
+  --azul-gelo: #dce9ff;
+  --roxo-gelo: #ece3ff;
+
+  /* Tons de marca (fortes o bastante para texto branco por cima: ≥ 4.5:1) */
+  --verde: #10b981;
+  --verde-escuro: #047857;
+  --verde-claro: #d4f5e6;
+  --azul: #3b82f6;
+  --azul-escuro: #1d4ed8;
+  --azul-claro: #dce8ff;
+  --roxo: #8b5cf6;
+  --roxo-escuro: #6d28d9;
+  --roxo-claro: #ede6ff;
+
+  /* Laranja de destaque (texto laranja usa a versão escura, por contraste) */
   --laranja: #f97316;
+  --laranja-escuro: #c2410c;
+  --laranja-claro: #ffedd5;
+
+  --amarelo: #f59e0b;
   --vermelho: #ef4444;
   --vermelho-claro: #fde3e3;
-  --azul: #3b82f6;
-  --azul-claro: #dbe8fe;
-  --roxo: #8b5cf6;
-  --roxo-claro: #ede9fe;
 
-  --raio: 10px;
-  --raio-lg: 16px;
-  --sombra: 0 1px 3px rgba(15, 27, 43, 0.08), 0 1px 2px rgba(15, 27, 43, 0.06);
-  --sombra-lg: 0 10px 30px rgba(15, 27, 43, 0.12);
+  --branco: #ffffff;
+  --fundo: rgba(255, 255, 255, 0.5);      /* tom de "vidro" para hovers e cabeçalhos de tabela */
+  --superficie: rgba(255, 255, 255, 0.62);/* face dos cartões de vidro */
+  --superficie-solida: #ffffff;
+  --texto: var(--grafite);
+  --texto-secundario: #4b5361;
+  --borda: rgba(31, 35, 41, 0.14);
+  --borda-campo: rgba(31, 35, 41, 0.28);  /* borda de campos: ≥ 3:1 sobre o vidro */
+
+  /* ═══ Liquid Glass ═══ */
+  --gradiente-marca: linear-gradient(120deg, #047857 0%, #1d4ed8 52%, #6d28d9 100%);
+  --gradiente-marca-hover: linear-gradient(120deg, #059669 0%, #2563eb 52%, #7c3aed 100%);
+  --gradiente-fundo:
+    radial-gradient(60% 55% at 8% 10%, rgba(16, 185, 129, 0.30) 0%, transparent 70%),
+    radial-gradient(55% 50% at 92% 8%, rgba(59, 130, 246, 0.28) 0%, transparent 70%),
+    radial-gradient(60% 60% at 85% 92%, rgba(139, 92, 246, 0.26) 0%, transparent 70%),
+    radial-gradient(45% 45% at 15% 95%, rgba(59, 130, 246, 0.16) 0%, transparent 70%),
+    linear-gradient(135deg, #f1fbf6 0%, #eef4ff 50%, #f5f0ff 100%);
+  --vidro: rgba(255, 255, 255, 0.58);
+  --vidro-forte: rgba(255, 255, 255, 0.78);
+  --vidro-borda: rgba(255, 255, 255, 0.75);
+  --vidro-brilho: inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 -1px 0 rgba(255, 255, 255, 0.25);
+  --vidro-blur: blur(22px) saturate(170%);
+
+  --raio: 14px;
+  --raio-lg: 22px;
+  --sombra: 0 8px 24px rgba(31, 35, 41, 0.08), 0 1px 3px rgba(31, 35, 41, 0.06);
+  --sombra-lg: 0 18px 48px rgba(31, 35, 41, 0.16);
 
   --fonte: 'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
 
@@ -34,47 +70,51 @@
   --escala-palavra: 0;
 
   --foco-cor: #f59e0b;
-  --foco-cor-padrao: #bec0c4;
+  --foco-cor-padrao: #f97316;
 
-  /* Cor do texto/borda desenhado em cima do fundo --verde-claro (badge de
-     sucesso, hover do botão "ghost"). No modo claro é igual a --verde-escuro
-     (não muda nada visualmente); no modo escuro vira branco, porque
-     --verde-claro fica bem escuro lá e o texto verde ficava com contraste
-     baixo demais (2.35:1, abaixo do mínimo de 4.5:1 recomendado). */
+  /* Texto/borda sobre o fundo --verde-claro (badge de sucesso, hover "ghost") */
   --sucesso-contraste: var(--verde-escuro);
 
   --sidebar-largura: 260px;
   --header-altura: 68px;
 
-  /* Borda dos cards do Dashboard — verde no modo claro, branco de verdade no
-     escuro (--branco não serve aqui: no modo escuro ele vira quase a cor do
-     fundo, pensado pra parecer "face de card", não pra ser uma borda visível). */
-  --dash-card-borda: var(--verde);
-
-  /* Cor de texto/ícone pra ações destrutivas discretas (Cancelar, Remover).
-     No claro é o --vermelho normal; no escuro precisa de um tom mais claro
-     (ver bloco de baixo) porque o --vermelho padrão dá só 4.04:1 de
-     contraste no fundo escuro, abaixo do mínimo de 4.5:1 pra texto. */
-  --perigo-texto: var(--vermelho);
+  --dash-card-borda: var(--vidro-borda);
+  --perigo-texto: #dc2626;
 }
 
-/* ═══ Modo escuro ═══ */
+/* ═══ Modo escuro — vidro grafite ═══ */
 :root[data-tema='escuro'] {
-  --navy: #0a121d;
-  --fundo: #0d1a14;
-  --superficie: #142a20;
-  --branco: #142a20;
-  --texto: #eaf5ee;
-  --texto-secundario: #a7c9b7;
-  --borda: #234436;
-  --verde-claro: #17392a;
-  --vermelho-claro: #3a1c1c;
-  --azul-claro: #1e3a5f;
-  --roxo-claro: #3b2f5e;
-  --sombra: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
-  --sombra-lg: 0 10px 30px rgba(0, 0, 0, 0.5);
-  --sucesso-contraste: #ffffff;
-  --foco-cor-padrao: #9ca3af;
-  --dash-card-borda: #ffffff;
+  --navy: #0e1116;
+  --verde-claro: rgba(16, 185, 129, 0.18);
+  --azul-claro: rgba(59, 130, 246, 0.2);
+  --roxo-claro: rgba(139, 92, 246, 0.22);
+  --laranja-claro: rgba(249, 115, 22, 0.2);
+  --vermelho-claro: rgba(239, 68, 68, 0.2);
+  --fundo: rgba(255, 255, 255, 0.06);
+  --superficie: rgba(28, 32, 40, 0.62);
+  --superficie-solida: #1c2028;
+  --branco: #1c2028;
+  --texto: #eef1f6;
+  --texto-secundario: #b4bccb;
+  --borda: rgba(255, 255, 255, 0.12);
+  --borda-campo: rgba(255, 255, 255, 0.3);
+  --gradiente-fundo:
+    radial-gradient(60% 55% at 8% 10%, rgba(16, 185, 129, 0.22) 0%, transparent 70%),
+    radial-gradient(55% 50% at 92% 8%, rgba(59, 130, 246, 0.22) 0%, transparent 70%),
+    radial-gradient(60% 60% at 85% 92%, rgba(139, 92, 246, 0.24) 0%, transparent 70%),
+    linear-gradient(135deg, #0f1418 0%, #10141d 50%, #15121e 100%);
+  --vidro: rgba(28, 32, 40, 0.55);
+  --vidro-forte: rgba(28, 32, 40, 0.78);
+  --vidro-borda: rgba(255, 255, 255, 0.12);
+  --vidro-brilho: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  --sombra: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --sombra-lg: 0 18px 48px rgba(0, 0, 0, 0.5);
+  --sucesso-contraste: #6ee7b7;
+  /* Tons "escuros" usados como texto/ícone: no fundo escuro precisam clarear */
+  --verde-escuro: #34d399;
+  --azul-escuro: #93b4ff;
+  --roxo-escuro: #c4b5fd;
+  --laranja-escuro: #fb923c;
+  --foco-cor-padrao: #fb923c;
   --perigo-texto: #f87171;
 }

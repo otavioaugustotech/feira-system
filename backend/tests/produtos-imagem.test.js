@@ -60,10 +60,25 @@ describe('Produtos — imagem do produto', () => {
     expect(removida.body.dados.imagem).toBeNull();
   });
 
+  test('aceita link https de imagem (cadastro e edição)', async () => {
+    const link = 'https://images.exemplo.com/frutas/morango.jpg?w=400';
+    const criado = await request(app).post('/api/produtos').set(auth())
+      .send({ nome: 'Morango por link', preco_custo: 6, preco_venda: 12, imagem: link });
+    expect(criado.status).toBe(201);
+    expect(criado.body.dados.imagem).toBe(link);
+
+    const outro = 'https://cdn.exemplo.com/morango-2.png';
+    const editado = await request(app).put(`/api/produtos/${criado.body.dados.id}`).set(auth()).send({ imagem: outro });
+    expect(editado.status).toBe(200);
+    expect(editado.body.dados.imagem).toBe(outro);
+  });
+
   test.each([
     ['texto que não é imagem', 'olá'],
     ['tipo de arquivo não aceito', 'data:image/gif;base64,R0lGODlhAQABAAAAACw='],
-    ['endereço de site', 'https://exemplo.com/foto.png'],
+    ['link sem https', 'http://exemplo.com/foto.png'],
+    ['link javascript', 'javascript:alert(1)'],
+    ['link com espaço', 'https://exemplo.com/minha foto.png'],
   ])('rejeita imagem inválida: %s', async (_nome, valor) => {
     const res = await request(app).post('/api/produtos').set(auth())
       .send({ nome: 'Produto ruim', preco_custo: 1, preco_venda: 2, imagem: valor });

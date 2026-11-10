@@ -14,11 +14,13 @@ import { produtosService } from '../../services/produtosService.js';
 import { useToast } from '../../hooks/useToast.js';
 import { extrairMensagemErro } from '../../services/api.js';
 import { formatarMoeda, formatarNumero, formatarQuantidade, rotuloTipoVenda } from '../../utils/formatters.js';
+import CampoImagemProduto, { MiniaturaProduto } from './CampoImagemProduto.jsx';
 import '../shared/list-page.css';
 
 const FORM_VAZIO = {
   nome: '', categoria: '', tipo_venda: 'unidade',
   preco_custo: '', preco_venda: '', quantidade: '', estoque_minimo: '5',
+  imagem: null,
 };
 
 export default function Produtos() {
@@ -86,6 +88,7 @@ export default function Produtos() {
       preco_venda: produto.preco_venda != null ? Number(produto.preco_venda) : '',
       quantidade: produto.quantidade != null ? Number(produto.quantidade) : '',
       estoque_minimo: produto.estoque_minimo != null ? Number(produto.estoque_minimo) : '5',
+      imagem: produto.imagem || null,
     });
     setErrosForm({});
     setModalAberto(true);
@@ -118,6 +121,13 @@ export default function Produtos() {
       quantidade: form.quantidade === '' ? 0 : Number(form.quantidade),
       estoque_minimo: form.estoque_minimo === '' ? 5 : Number(form.estoque_minimo),
     };
+    /* imagem: no cadastro só vai se tiver; na edição só vai se mudou
+       (null remove), para não reenviar a mesma foto a cada alteração */
+    if (editando) {
+      if (form.imagem !== (editando.imagem || null)) payload.imagem = form.imagem;
+    } else if (form.imagem) {
+      payload.imagem = form.imagem;
+    }
 
     setSalvando(true);
     try {
@@ -157,7 +167,16 @@ export default function Produtos() {
   };
 
   const colunas = [
-    { chave: 'nome', rotulo: 'Nome' },
+    {
+      chave: 'nome',
+      rotulo: 'Produto',
+      render: (p) => (
+        <span className="produto-nome-celula">
+          <MiniaturaProduto imagem={p.imagem} nome={p.nome} />
+          {p.nome}
+        </span>
+      ),
+    },
     { chave: 'categoria', rotulo: 'Categoria', render: (p) => p.categoria || '—' },
     { chave: 'tipo_venda', rotulo: 'Tipo', render: (p) => rotuloTipoVenda(p.tipo_venda) },
     { chave: 'preco_custo', rotulo: 'Custo', render: (p) => formatarMoeda(p.preco_custo), alinharDireita: true },
@@ -231,6 +250,11 @@ export default function Produtos() {
       {/* ═══ Modal criar/editar ═══ */}
       <Modal aberto={modalAberto} titulo={editando ? 'Editar produto' : 'Novo produto'} onFechar={() => setModalAberto(false)}>
         <form onSubmit={salvar} noValidate>
+          <CampoImagemProduto
+            valor={form.imagem}
+            nomeProduto={form.nome}
+            onAlterar={(imagem) => setForm((f) => ({ ...f, imagem }))}
+          />
           <Input label="Nome do produto" obrigatorio value={form.nome} onChange={atualizarCampo('nome')} erro={errosForm.nome} />
           <div className="form-grid-2">
             <Input label="Categoria" value={form.categoria} onChange={atualizarCampo('categoria')} dica="Opcional" />

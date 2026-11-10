@@ -5,7 +5,10 @@
 #
 # Cria:
 #   • feira-system-api  → Web Service Node (pasta backend/)
-#   • feira-system-db   → PostgreSQL gerenciado
+#   • feira-system-app  → Static Site com o sistema React (pasta frontend/)
+#     ⭐ substitui o Netlify, que pausou as publicações quando os créditos
+#     do plano gratuito acabaram.
+# O banco PostgreSQL fica no Neon (neon.tech), fora do Render.
 # As variáveis com "sync: false" o Render pergunta na hora do Apply
 # (ficam só no painel, nunca no Git).
 # ═══════════════════════════════════════════════════════════════════
@@ -15,7 +18,7 @@ services:
     name: feira-system-api
     runtime: node
     rootDir: backend
-    region: virginia          # mesma região do banco (as duas precisam bater)
+    region: virginia          # perto do banco no Neon (AWS US East 1 / Virginia)
     plan: free                # "starter" não hiberna: sem atraso no 1º acesso
     buildCommand: npm ci --omit=dev
     startCommand: node server.js
@@ -34,8 +37,11 @@ services:
         value: America/Sao_Paulo
 
       # Endereços públicos (troque pelo seu domínio)
+      # FRONTEND_URL aceita uma lista separada por vírgula: a PRIMEIRA é usada
+      # nos links dos e-mails (recuperar senha); todas são liberadas no CORS.
+      # O endereço antigo do Netlify continua liberado enquanto existir.
       - key: FRONTEND_URL
-        value: https://feira-system-app.netlify.app
+        value: https://feira-system-app.onrender.com,https://feira-system-app.netlify.app
       - key: LANDING_URL
         value: https://feira-system.netlify.app
 
@@ -45,17 +51,11 @@ services:
       - key: GOOGLE_CLIENT_ID
         sync: false
 
-      # Banco: preenchido automaticamente a partir do Postgres abaixo
-      - key: DB_HOST
-        fromDatabase: { name: feira-system-db, property: host }
-      - key: DB_PORT
-        fromDatabase: { name: feira-system-db, property: port }
-      - key: DB_USER
-        fromDatabase: { name: feira-system-db, property: user }
-      - key: DB_PASSWORD
-        fromDatabase: { name: feira-system-db, property: password }
-      - key: DB_NAME
-        fromDatabase: { name: feira-system-db, property: database }
+      # Banco: PostgreSQL no Neon (grátis, não expira). O valor é a
+      # "connection string" DIRETA do Neon (com "Connection pooling"
+      # desligado) e fica só no painel do Render, nunca no Git.
+      - key: DATABASE_URL
+        sync: false
 
       # E-mail (recuperação de senha + aviso de leads).
       # O plano free do Render BLOQUEIA SMTP; por isso o envio é pela Gmail
@@ -80,10 +80,49 @@ services:
       - key: LEADS_WEBHOOK_TOKEN
         sync: false
 
-databases:
-  - name: feira-system-db
-    databaseName: feira_system
-    user: feira_system
-    region: virginia
-    plan: free                 # o Postgres free do Render expira após 30 dias; use "basic-256mb" em produção
-    ipAllowList: []            # só serviços do próprio Render acessam; para rodar o schema.sql, libere seu IP no painel
+  # ═══ Sistema React (front-end) — Static Site grátis do Render ═══
+  - type: web
+    name: feira-system-app
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    autoDeploy: true
+    envVars:
+      # lidas NO BUILD pelo Vite
+      - key: VITE_API_URL
+        value: https://feira-system-api.onrender.com/api
+      - key: VITE_GOOGLE_CLIENT_ID
+        value: 264198935201-66d1ktj0mbrj7ffl06vim59kb0b00fhg.apps.googleusercontent.com
+      - key: NODE_VERSION
+        value: "20"
+    # SPA: qualquer rota (/login, /dashboard...) entrega o index.html.
+    # Arquivos que existem de verdade (termos.html, privacidade.html,
+    # /assets/...) continuam sendo servidos normalmente.
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    # Mesmos cabeçalhos do public/_headers (o Render não lê esse arquivo)
+    headers:
+      - path: /*
+        name: Cross-Origin-Opener-Policy
+        value: same-origin-allow-popups
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: /*
+        name: Permissions-Policy
+        value: camera=(), microphone=(), geolocation=()
+      - path: /index.html
+        name: Cache-Control
+        value: no-cache
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable

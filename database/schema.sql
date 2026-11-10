@@ -113,13 +113,16 @@ CREATE TABLE IF NOT EXISTS desperdicios (
     usuario_id     INTEGER        NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
     produto_id     INTEGER        NOT NULL REFERENCES produtos(id) ON DELETE RESTRICT,
     quantidade     NUMERIC(12,3)  NOT NULL CHECK (quantidade > 0),
-    motivo         VARCHAR(255),
+    categoria_motivo VARCHAR(20)  NOT NULL DEFAULT 'outros'
+                   CHECK (categoria_motivo IN ('vencimento', 'transporte', 'manuseio', 'armazenamento', 'outros')),
+    motivo         VARCHAR(255),  -- descricao livre (opcional) do motivo
     valor_perda    NUMERIC(12,2)  NOT NULL,
     data_registro  TIMESTAMP      NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_desperdicios_usuario_data ON desperdicios(usuario_id, data_registro);
 CREATE INDEX IF NOT EXISTS idx_desperdicios_produto ON desperdicios(produto_id);
+CREATE INDEX IF NOT EXISTS idx_desperdicios_categoria ON desperdicios(usuario_id, categoria_motivo);
 
 /* ───────────────────────── metas ─────────────────────────
    metasService.js: definir() faz

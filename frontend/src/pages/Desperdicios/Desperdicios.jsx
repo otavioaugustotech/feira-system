@@ -14,6 +14,7 @@ import { useToast } from '../../hooks/useToast.js';
 import { extrairMensagemErro } from '../../services/api.js';
 import { baixarBlob } from '../../utils/download.js';
 import { formatarMoeda, formatarDataHora, formatarQuantidade } from '../../utils/formatters.js';
+import { CATEGORIAS_DESPERDICIO, rotuloCategoriaDesperdicio } from '../../utils/categoriasDesperdicio.js';
 import '../shared/list-page.css';
 
 export default function Desperdicios() {
@@ -26,12 +27,14 @@ export default function Desperdicios() {
 
   const [produtoId, setProdutoId] = useState('');
   const [quantidade, setQuantidade] = useState('');
-  const [motivo, setMotivo] = useState('');
+  const [categoriaMotivo, setCategoriaMotivo] = useState('');
+  const [motivo, setMotivo] = useState(''); /* descrição livre do motivo */
   const [registrando, setRegistrando] = useState(false);
   const [errosForm, setErrosForm] = useState({});
 
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim] = useState('');
+  const [filtroCategoria, setFiltroCategoria] = useState('');
   const [exportando, setExportando] = useState('');
 
   const [modalExcluirAberto, setModalExcluirAberto] = useState(false);
@@ -62,6 +65,7 @@ export default function Desperdicios() {
     const novosErros = {};
     if (!produtoId) novosErros.produto = 'Selecione um produto.';
     if (!quantidade || Number(quantidade) <= 0) novosErros.quantidade = 'Informe uma quantidade válida.';
+    if (!categoriaMotivo) novosErros.categoria = 'Escolha a categoria do motivo.';
     setErrosForm(novosErros);
     if (Object.keys(novosErros).length > 0) return;
 
@@ -70,13 +74,15 @@ export default function Desperdicios() {
       await desperdiciosService.registrar({
         produto_id: Number(produtoId),
         quantidade: Number(quantidade),
+        categoria_motivo: categoriaMotivo,
         motivo: motivo.trim() || undefined,
       });
       sucesso('Desperdício registrado.');
       setProdutoId('');
       setQuantidade('');
+      setCategoriaMotivo('');
       setMotivo('');
-      carregarDados();
+      carregarDados(filtrosAtuais());
     } catch (err) {
       notificarErro(extrairMensagemErro(err));
     } finally {
@@ -84,11 +90,15 @@ export default function Desperdicios() {
     }
   };
 
+  /* período + categoria do motivo usados na lista e nas exportações */
+  const filtrosAtuais = () => ({
+    data_inicio: dataInicio || undefined,
+    data_fim: dataFim || undefined,
+    categoria_motivo: filtroCategoria || undefined,
+  });
+
   const filtrarPeriodo = () => {
-    carregarDados({
-      data_inicio: dataInicio || undefined,
-      data_fim: dataFim || undefined,
-    });
+    carregarDados(filtrosAtuais());
   };
 
   const abrirExcluir = (registro) => {
@@ -102,7 +112,7 @@ export default function Desperdicios() {
       await desperdiciosService.remover(registroExcluir.id);
       sucesso('Desperdício removido e estoque devolvido.');
       setModalExcluirAberto(false);
-      carregarDados({ data_inicio: dataInicio || undefined, data_fim: dataFim || undefined });
+      carregarDados(filtrosAtuais());
     } catch (err) {
       notificarErro(extrairMensagemErro(err));
     } finally {
@@ -113,7 +123,7 @@ export default function Desperdicios() {
   const exportar = async (formato) => {
     setExportando(formato);
     try {
-      const params = { data_inicio: dataInicio || undefined, data_fim: dataFim || undefined };
+      const params = filtrosAtuais();
       const blob = formato === 'pdf'
         ? await desperdiciosService.exportarPDF(params)
         : await desperdiciosService.exportarWord(params);
@@ -129,11 +139,21 @@ export default function Desperdicios() {
 
   const totalPerda = registros.reduce((acc, r) => acc + parseFloat(r.valor_perda || 0), 0);
 
+  /* ⭐ prejuízo agrupado pela categoria do motivo (maior primeiro) */
+  const perdaPorCategoria = Object.entries(
+    registros.reduce((acc, r) => {
+      const chave = r.categoria_motivo || 'outros';
+      acc[chave] = (acc[chave] || 0) + parseFloat(r.valor_perda || 0);
+      return acc;
+    }, {})
+  ).sort((a, b) => b[1] - a[1]);
+
   const colunas = [
     { chave: 'data_registro', rotulo: 'Data', render: (r) => formatarDataHora(r.data_registro) },
     { chave: 'produto_nome', rotulo: 'Produto' },
     { chave: 'quantidade', rotulo: 'Quantidade', render: (r) => formatarQuantidade(r.quantidade), alinharDireita: true },
-    { chave: 'motivo', rotulo: 'Motivo', render: (r) => r.motivo || '—' },
+    { chave: 'categoria_motivo', rotulo: 'Categoria do motivo', render: (r) => rotuloCategoriaDesperdicio(r.categoria_motivo) },
+    { chave: 'motivo', rotulo: 'Descrição', render: (r) => r.motivo || '—' },
     { chave: 'valor_perda', rotulo: 'Prejuízo', render: (r) => formatarMoeda(r.valor_perda), alinharDireita: true },
   ];
 
@@ -164,7 +184,25 @@ export default function Desperdicios() {
               erro={errosForm.quantidade}
             />
           </div>
-          <Input label="Motivo" dica="Opcional — ex: vencimento, dano no transporte" value={motivo} onChange={(e) => setMotivo(e.target.value)} />
+          <div className="form-grid-2">
+            <Select
+              label="Categoria do motivo"
+              obrigatorio
+              value={categoriaMotivo}
+              onChange={(e) => setCategoriaMotivo(e.target.value)}
+              erro={errosForm.categoria}
+            >
+              <option value="">Selecione a categoria...</option>
+              {CATEGORIAS_DESPERDICIO.map((c) => <option key={c.valor} value={c.valor}>{c.rotulo}</option>)}
+            </Select>
+            <Input
+              label="Descrição"
+              dica="Opcional — ex.: folhas murchas, caixa caiu no transporte"
+              maxLength={255}
+              value={motivo}
+              onChange={(e) => setMotivo(e.target.value)}
+            />
+          </div>
           <Button type="submit" icone={Plus} carregando={registrando}>Registrar desperdício</Button>
         </form>
       </Card>
@@ -173,6 +211,10 @@ export default function Desperdicios() {
         <div className="pagina-filtros">
           <Input label="De" type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
           <Input label="Até" type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
+          <Select label="Categoria do motivo" value={filtroCategoria} onChange={(e) => setFiltroCategoria(e.target.value)}>
+            <option value="">Todas</option>
+            {CATEGORIAS_DESPERDICIO.map((c) => <option key={c.valor} value={c.valor}>{c.rotulo}</option>)}
+          </Select>
           <Button variante="secondary" onClick={filtrarPeriodo}>Filtrar</Button>
           <div style={{ flex: 1 }} />
           <Button variante="secondary" icone={FileDown} onClick={() => exportar('pdf')} carregando={exportando === 'pdf'}>
@@ -187,6 +229,23 @@ export default function Desperdicios() {
           <Alert tipo="erro">
             Prejuízo total no período: <strong>{formatarMoeda(totalPerda)}</strong>
           </Alert>
+        )}
+
+        {perdaPorCategoria.length > 0 && (
+          <div style={{ marginBottom: '1rem' }}>
+            <h3 className="card-titulo" style={{ fontSize: '0.95rem' }}>Prejuízo por categoria do motivo</h3>
+            <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+              {perdaPorCategoria.map(([cat, valor]) => (
+                <li key={cat} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.35rem 0', borderBottom: '1px solid var(--borda)' }}>
+                  <span>{rotuloCategoriaDesperdicio(cat)}</span>
+                  <span>
+                    <strong>{formatarMoeda(valor)}</strong>
+                    {' '}({totalPerda > 0 ? ((valor / totalPerda) * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) : 0}%)
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
 
         {carregando ? (

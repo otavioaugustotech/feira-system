@@ -16,7 +16,7 @@ import { formatarMoeda, formatarQuantidade } from './formatters.js';
  * baixados na hora em que a função é chamada de verdade (import()
  * dinâmico), e o Vite os separa automaticamente num arquivo à parte.
  */
-export async function gerarPdfRelatorio({ usuario, periodo, resumo, kpis }) {
+export async function gerarPdfRelatorio({ usuario, periodo, resumo, kpis, filtroTexto }) {
   const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
     import('jspdf'),
     import('jspdf-autotable'),
@@ -33,9 +33,11 @@ export async function gerarPdfRelatorio({ usuario, periodo, resumo, kpis }) {
   doc.text(`Banca: ${usuario?.nome_banca || usuario?.nome || '—'}`, 14, 26);
   doc.text(`Período: ${periodo?.inicio || '—'} a ${periodo?.fim || '—'}`, 14, 32);
   doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 14, 38);
+  /* ⭐ filtro de produto/categoria aplicado (quando houver) */
+  if (filtroTexto) doc.text(`Filtro: ${filtroTexto}`, 14, 44);
 
   autoTable(doc, {
-    startY: 46,
+    startY: filtroTexto ? 52 : 46,
     head: [['Indicador', 'Valor']],
     body: [
       ['Receita total', formatarMoeda(resumo?.receita_total)],

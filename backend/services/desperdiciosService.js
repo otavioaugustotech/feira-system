@@ -5,10 +5,14 @@
    ═══════════════════════════════════════════════════════════ */
 
 const db = require('../db');
+const { CHAVES_CATEGORIAS } = require('../utils/categoriasDesperdicio');
 
 /* ══ REGISTRAR desperdício — dá baixa no estoque do produto ══ */
 const registrar = async (usuarioId, dados) => {
   const { produto_id, quantidade, motivo } = dados;
+  /* ⭐ categoria padronizada do motivo (padrão: 'outros') + descrição livre */
+  const categoria = CHAVES_CATEGORIAS.includes(dados.categoria_motivo) ? dados.categoria_motivo : 'outros';
+  const descricao = (typeof motivo === 'string' && motivo.trim()) || null;
 
   const client = await db.connect();
   try {
@@ -32,9 +36,9 @@ const registrar = async (usuarioId, dados) => {
     const valorPerda = parseFloat(produto.preco_custo) * parseFloat(quantidade);
 
     const resultado = await client.query(
-      `INSERT INTO desperdicios (usuario_id, produto_id, quantidade, motivo, valor_perda)
-       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [usuarioId, produto_id, quantidade, motivo || null, valorPerda]
+      `INSERT INTO desperdicios (usuario_id, produto_id, quantidade, categoria_motivo, motivo, valor_perda)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [usuarioId, produto_id, quantidade, categoria, descricao, valorPerda]
     );
 
     await client.query(
@@ -52,13 +56,14 @@ const registrar = async (usuarioId, dados) => {
   }
 };
 
-/* ══ LISTAR desperdícios com filtro opcional de período ══ */
+/* ══ LISTAR desperdícios com filtros opcionais de período, categoria do
+   motivo e produto ══ */
 const listar = async (usuarioId, filtros = {}) => {
-  const { data_inicio, data_fim } = filtros;
+  const { data_inicio, data_fim, categoria_motivo, produto_id } = filtros;
 
   let query = `
     SELECT d.id, d.produto_id, p.nome AS produto_nome, d.quantidade,
-           d.motivo, d.valor_perda, d.data_registro
+           d.categoria_motivo, d.motivo, d.valor_perda, d.data_registro
     FROM desperdicios d
     JOIN produtos p ON p.id = d.produto_id
     WHERE d.usuario_id = $1
@@ -67,6 +72,15 @@ const listar = async (usuarioId, filtros = {}) => {
 
   if (data_inicio) { params.push(data_inicio);            query += ` AND d.data_registro >= $${params.length}`; }
   if (data_fim)    { params.push(data_fim + ' 23:59:59'); query += ` AND d.data_registro <= $${params.length}`; }
+  if (CHAVES_CATEGORIAS.includes(categoria_motivo)) {
+    params.push(categoria_motivo);
+    query += ` AND d.categoria_motivo = $${params.length}`;
+  }
+  const idProduto = Number(produto_id);
+  if (Number.isInteger(idProduto) && idProduto > 0) {
+    params.push(idProduto);
+    query += ` AND d.produto_id = $${params.length}`;
+  }
 
   query += ' ORDER BY d.data_registro DESC';
   const resultado = await db.query(query, params);

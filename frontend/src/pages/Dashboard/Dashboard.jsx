@@ -16,6 +16,8 @@ import EmptyState from '../../components/ui/EmptyState.jsx';
 import ChartWithTable from '../../components/charts/ChartWithTable.jsx';
 import LineChart from '../../components/charts/LineChart.jsx';
 import DonutChart from '../../components/charts/DonutChart.jsx';
+import FiltrosIndicadores from '../../components/filtros/FiltrosIndicadores.jsx';
+import ComoCalculado from '../../components/filtros/ComoCalculado.jsx';
 import { relatoriosService } from '../../services/relatoriosService.js';
 import { metasService } from '../../services/metasService.js';
 import { produtosService } from '../../services/produtosService.js';
@@ -23,9 +25,18 @@ import { useAuth } from '../../hooks/useAuth.js';
 import { useToast } from '../../hooks/useToast.js';
 import { extrairMensagemErro } from '../../services/api.js';
 import { formatarMoeda, formatarQuantidade, formatarPercentual, paraNumeroBR, formatarValorBR, rotuloFormaPagamento } from '../../utils/formatters.js';
+import { calcularPeriodo, paramsDoFiltro, rotuloPeriodo, rotuloComparacao, somarDiasISO, dataBR } from '../../utils/periodo.js';
 import './dashboard.css';
 
 const hoje = new Date();
+
+/* ⭐ Filtro padrão: o dia de hoje, com todos os produtos (mesmo resumo de antes) */
+const filtroInicial = () => ({ preset: 'dia', ...calcularPeriodo('dia'), produtoId: '', categoria: '' });
+
+/* Para o gráfico de evolução: um período de 1 dia vira "os 7 dias até esse dia" */
+const periodoDoGrafico = (f) => (f.inicio === f.fim
+  ? { inicio: somarDiasISO(f.fim, -6), fim: f.fim }
+  : { inicio: f.inicio, fim: f.fim });
 
 export default function Dashboard() {
   const { usuario } = useAuth();
@@ -39,6 +50,11 @@ export default function Dashboard() {
   const [metaProgresso, setMetaProgresso] = useState(null);
   const [estoqueBaixo, setEstoqueBaixo] = useState([]);
 
+  /* ⭐ filtros de período / produto / categoria (pedido da banca) */
+  const [filtro, setFiltro] = useState(filtroInicial);
+  const [produtos, setProdutos] = useState([]);
+  const [atualizando, setAtualizando] = useState(false);
+
   const [modalMetaAberto, setModalMetaAberto] = useState(false);
   const [metaReceita, setMetaReceita] = useState('');
   const [metaLucro, setMetaLucro] = useState('');
@@ -47,26 +63,49 @@ export default function Dashboard() {
   const [modalExcluirMetaAberto, setModalExcluirMetaAberto] = useState(false);
   const [excluindoMeta, setExcluindoMeta] = useState(false);
 
+  /* Indicadores que dependem do filtro (cartões, gráficos, mais vendidos) */
+  const buscarIndicadores = async (f) => {
+    const params = paramsDoFiltro(f);
+    const periodoGrafico = periodoDoGrafico(f);
+    const [h, g, r] = await Promise.all([
+      relatoriosService.hoje(params),
+      relatoriosService.graficos({ ...params, data_inicio: periodoGrafico.inicio, data_fim: periodoGrafico.fim }),
+      relatoriosService.resumo(params),
+    ]);
+    setDadosHoje(h);
+    setGraficos(g);
+    setResumo(r);
+  };
+
   const carregarTudo = async () => {
     setCarregando(true);
     setErroCarregar('');
     try {
-      const [h, g, r, m, eb] = await Promise.all([
-        relatoriosService.hoje(),
-        relatoriosService.graficos({ dias: 7 }),
-        relatoriosService.resumo(),
+      const [, m, eb, prods] = await Promise.all([
+        buscarIndicadores(filtro),
         metasService.progresso(hoje.getFullYear(), hoje.getMonth() + 1),
         produtosService.estoqueBaixo(),
+        produtosService.listar(),
       ]);
-      setDadosHoje(h);
-      setGraficos(g);
-      setResumo(r);
       setMetaProgresso(m);
       setEstoqueBaixo(eb || []);
+      setProdutos(prods || []);
     } catch (err) {
       setErroCarregar(extrairMensagemErro(err));
     } finally {
       setCarregando(false);
+    }
+  };
+
+  const aplicarFiltro = async (novo) => {
+    setFiltro(novo);
+    setAtualizando(true);
+    try {
+      await buscarIndicadores(novo);
+    } catch (err) {
+      notificarErro(extrairMensagemErro(err));
+    } finally {
+      setAtualizando(false);
     }
   };
 
@@ -124,8 +163,17 @@ export default function Dashboard() {
   if (carregando) return <Loading texto="Carregando seu dashboard..." />;
   if (erroCarregar) return <Alert tipo="erro" titulo="Não foi possível carregar o dashboard">{erroCarregar}</Alert>;
 
-  const variacao = Number(dadosHoje?.variacao_hoje ?? 0);
+  const variacao = Number(dadosHoje?.variacao ?? dadosHoje?.variacao_hoje ?? 0);
   const variacaoPositiva = variacao >= 0;
+  const periodoTexto = rotuloPeriodo(filtro);
+  const periodoGrafico = periodoDoGrafico(filtro);
+  const tituloGrafico = filtro.inicio === filtro.fim
+    ? `Vendas dos 7 dias até ${dataBR(filtro.fim)}`
+    : `Vendas por dia (${dataBR(periodoGrafico.inicio)} a ${dataBR(periodoGrafico.fim)})`;
+  const filtroProdutoTexto = [
+    filtro.categoria && `categoria "${filtro.categoria}"`,
+    filtro.produtoId && `produto "${produtos.find((p) => String(p.id) === String(filtro.produtoId))?.nome || ''}"`,
+  ].filter(Boolean).join(' e ');
 
   return (
     <div className="dashboard-pagina">
@@ -134,19 +182,32 @@ export default function Dashboard() {
         <p>Aqui está o resumo do seu negócio hoje, {hoje.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' })}.</p>
       </div>
 
-      {/* ═══ KPIs de hoje ═══ */}
-      <section className="dash-kpis" aria-label="Indicadores de hoje">
+      {/* ═══ ⭐ Filtros: período (dados históricos), categoria e produto ═══ */}
+      <FiltrosIndicadores valor={filtro} produtos={produtos} onAplicar={aplicarFiltro} rotulo="Filtros do dashboard" />
+      <p className="filtros-resumo" aria-live="polite">
+        {atualizando ? 'Atualizando indicadores...' : (
+          <>Indicadores {periodoTexto}{filtroProdutoTexto ? <> — somente {filtroProdutoTexto}</> : ' — todos os produtos'}. A meta do mês e o estoque baixo não dependem do filtro.</>
+        )}
+      </p>
+
+      {/* ═══ KPIs do período ═══ */}
+      <section className="dash-kpis" aria-label={`Indicadores ${periodoTexto}`} aria-busy={atualizando}>
         <Card className="dash-kpi-card dash-kpi-receita">
           <span className="dash-kpi-icone" style={{ background: 'var(--verde-claro)', color: 'var(--verde-escuro)' }}>
             <DollarSign size={22} aria-hidden="true" />
           </span>
           <div className="dash-kpi-texto">
-            <p>Receita de hoje</p>
+            <p>Receita {periodoTexto}</p>
             <p className="dash-kpi-valor">{formatarMoeda(dadosHoje?.receita)}</p>
             <span className="dash-kpi-variacao" style={{ color: variacaoPositiva ? 'var(--verde-escuro)' : 'var(--vermelho)' }}>
               {variacaoPositiva ? <ArrowUpRight size={15} aria-hidden="true" /> : <ArrowDownRight size={15} aria-hidden="true" />}
-              {Math.abs(variacao)}% vs ontem
+              {Math.abs(variacao)}% {rotuloComparacao(filtro)}
             </span>
+            <ComoCalculado
+              formula={`soma de (preço unitário × quantidade) dos itens das vendas concluídas. Variação = (receita atual − receita anterior) ÷ receita anterior × 100; período anterior: ${dataBR(dadosHoje?.periodo_anterior?.inicio)} a ${dataBR(dadosHoje?.periodo_anterior?.fim)} (${formatarMoeda(dadosHoje?.receita_anterior)}).`}
+              representa="quanto dinheiro entrou com as vendas."
+              paraQue="perceber se o movimento está subindo ou caindo."
+            />
           </div>
         </Card>
 
@@ -155,9 +216,14 @@ export default function Dashboard() {
             <TrendingUp size={22} aria-hidden="true" />
           </span>
           <div className="dash-kpi-texto">
-            <p>Lucro de hoje</p>
+            <p>Lucro {periodoTexto}</p>
             <p className="dash-kpi-valor">{formatarMoeda(dadosHoje?.lucro)}</p>
-            <span className="dash-kpi-variacao" style={{ color: 'var(--texto-secundario)' }}>{dadosHoje?.total_vendas || 0} vendas hoje</span>
+            <span className="dash-kpi-variacao" style={{ color: 'var(--texto-secundario)' }}>{dadosHoje?.total_vendas || 0} venda{Number(dadosHoje?.total_vendas) === 1 ? '' : 's'}</span>
+            <ComoCalculado
+              formula="soma de (preço de venda − preço de custo) × quantidade de cada item vendido, com os preços gravados no momento da venda."
+              representa="o ganho sobre a mercadoria, sem contar as perdas."
+              paraQue="saber se a venda está realmente dando retorno, não só faturamento."
+            />
           </div>
         </Card>
 
@@ -168,6 +234,11 @@ export default function Dashboard() {
           <div className="dash-kpi-texto">
             <p>Ticket médio</p>
             <p className="dash-kpi-valor">{formatarMoeda(dadosHoje?.ticket_medio)}</p>
+            <ComoCalculado
+              formula={`receita ÷ número de vendas concluídas (${dadosHoje?.total_vendas || 0}).`}
+              representa="quanto cada cliente gasta, em média, por compra."
+              paraQue="avaliar combos e promoções para aumentar o valor de cada venda."
+            />
           </div>
         </Card>
 
@@ -176,8 +247,13 @@ export default function Dashboard() {
             <Trash2 size={22} aria-hidden="true" />
           </span>
           <div className="dash-kpi-texto">
-            <p>Desperdício de hoje</p>
+            <p>Desperdício {periodoTexto}</p>
             <p className="dash-kpi-valor">{formatarMoeda(dadosHoje?.desperdicio)}</p>
+            <ComoCalculado
+              formula="soma de (preço de custo × quantidade perdida) dos desperdícios registrados."
+              representa="o prejuízo com produtos que estragaram, amassaram ou venceram."
+              paraQue="mostrar onde o dinheiro está sendo perdido e agir para reduzir."
+            />
           </div>
         </Card>
       </section>
@@ -186,8 +262,8 @@ export default function Dashboard() {
         {/* ═══ Evolução de vendas ═══ */}
         <Card>
           <ChartWithTable
-            titulo="Vendas dos últimos 7 dias"
-            resumoTextual={`Gráfico de linha mostrando a receita diária dos últimos 7 dias, variando de ${formatarMoeda(Math.min(...(graficos?.evolucao?.map((d) => Number(d.vendas)) || [0])))} a ${formatarMoeda(Math.max(...(graficos?.evolucao?.map((d) => Number(d.vendas)) || [0])))}.`}
+            titulo={tituloGrafico}
+            resumoTextual={`Gráfico de linha mostrando a receita diária do período, variando de ${formatarMoeda(Math.min(...(graficos?.evolucao?.map((d) => Number(d.vendas)) || [0])))} a ${formatarMoeda(Math.max(...(graficos?.evolucao?.map((d) => Number(d.vendas)) || [0])))}.`}
             linhas={(graficos?.evolucao || []).map((d) => ({ rotulo: d.dia, valor: d.vendas, valorFormatado: formatarMoeda(d.vendas) }))}
             colunaValor="Receita"
           >
@@ -299,8 +375,8 @@ export default function Dashboard() {
         {/* ═══ Formas de pagamento ═══ */}
         <Card>
           <ChartWithTable
-            titulo="Formas de pagamento (7 dias)"
-            resumoTextual="Gráfico de rosca mostrando a distribuição de vendas por forma de pagamento nos últimos 7 dias."
+            titulo={`Formas de pagamento (${dataBR(periodoGrafico.inicio)} a ${dataBR(periodoGrafico.fim)})`}
+            resumoTextual="Gráfico de rosca mostrando o número de vendas por forma de pagamento no período do gráfico."
             linhas={(graficos?.pagamentos || []).map((p) => ({ rotulo: rotuloFormaPagamento(p.forma), valor: p.quantidade }))}
             colunaValor="Quantidade"
           >
@@ -318,9 +394,9 @@ export default function Dashboard() {
 
       {/* ═══ Produtos mais vendidos ═══ */}
       <Card>
-        <h3 className="card-titulo">Produtos mais vendidos no mês</h3>
+        <h3 className="card-titulo">Produtos mais vendidos {periodoTexto}</h3>
         {(resumo?.top_produtos || []).length === 0 ? (
-          <EmptyState titulo="Nenhuma venda registrada neste mês ainda." />
+          <EmptyState titulo="Nenhuma venda no período selecionado." />
         ) : (
           <ul className="dash-lista-alerta">
             {resumo.top_produtos.map((p) => (

@@ -1,7 +1,8 @@
 /* ═══════════════════════════════════════════════════════════
-   schemas/index.js — ⭐ NOVO — Schemas Zod para validação de entrada
+   schemas/index.js —  NOVO — Schemas Zod para validação de entrada
    ═══════════════════════════════════════════════════════════ */
 const { z } = require('zod');
+const { CHAVES_CATEGORIAS } = require('../utils/categoriasDesperdicio');
 
 const vendaSchema = z.object({
   forma_pagamento: z.enum(['dinheiro', 'pix', 'cartao_credito', 'cartao_debito'], {
@@ -32,6 +33,8 @@ const produtoSchema = z.object({
 const desperdicioSchema = z.object({
   produto_id: z.number().int().positive(),
   quantidade: z.number().positive(),
+  /* ⭐ categoria padronizada do motivo + descrição livre opcional */
+  categoria_motivo: z.enum(CHAVES_CATEGORIAS).optional().default('outros'),
   motivo: z.string().max(255).optional(),
 });
 

@@ -38,21 +38,33 @@ const listar = async (req, res) => {
 
 /* Função auxiliar compartilhada pelos dois exports */
 const _buscarDadosExport = async (usuarioId, query) => {
-  const { data_inicio, data_fim } = query;
+  const { data_inicio, data_fim, categoria_motivo, produto_id } = query;
   const inicio = data_inicio || dataLocalISO(30);
   const fim    = data_fim    || dataLocalISO();
 
-  const registros = await desperdiciosService.listar(usuarioId, { data_inicio: inicio, data_fim: fim });
+  const registros = await desperdiciosService.listar(usuarioId, {
+    data_inicio: inicio, data_fim: fim, categoria_motivo, produto_id,
+  });
   const totalPerda = registros.reduce((acc, r) => acc + parseFloat(r.valor_perda), 0);
 
-  return { registros, totalPerda, periodo: { inicio, fim } };
+  /* ⭐ prejuízo agrupado pela categoria do motivo (maior perda primeiro) */
+  const porCategoria = {};
+  registros.forEach((r) => {
+    const chave = r.categoria_motivo || 'outros';
+    porCategoria[chave] = (porCategoria[chave] || 0) + parseFloat(r.valor_perda);
+  });
+  const totaisPorCategoria = Object.entries(porCategoria)
+    .map(([categoria, valor]) => ({ categoria, valor }))
+    .sort((a, b) => b.valor - a.valor);
+
+  return { registros, totalPerda, totaisPorCategoria, periodo: { inicio, fim } };
 };
 
 /* GET /api/desperdicios/exportar/pdf — ⭐ NOVO */
 const exportarPDF = async (req, res) => {
   try {
-    const { registros, totalPerda, periodo } = await _buscarDadosExport(req.usuario.id, req.query);
-    const buffer = await gerarPDFDesperdicios(registros, totalPerda, periodo);
+    const { registros, totalPerda, totaisPorCategoria, periodo } = await _buscarDadosExport(req.usuario.id, req.query);
+    const buffer = await gerarPDFDesperdicios(registros, totalPerda, periodo, totaisPorCategoria);
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="desperdicios_${periodo.inicio}_a_${periodo.fim}.pdf"`);
@@ -66,8 +78,8 @@ const exportarPDF = async (req, res) => {
 /* GET /api/desperdicios/exportar/word — ⭐ NOVO */
 const exportarWord = async (req, res) => {
   try {
-    const { registros, totalPerda, periodo } = await _buscarDadosExport(req.usuario.id, req.query);
-    const buffer = await gerarWordDesperdicios(registros, totalPerda, periodo);
+    const { registros, totalPerda, totaisPorCategoria, periodo } = await _buscarDadosExport(req.usuario.id, req.query);
+    const buffer = await gerarWordDesperdicios(registros, totalPerda, periodo, totaisPorCategoria);
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
     res.setHeader('Content-Disposition', `attachment; filename="desperdicios_${periodo.inicio}_a_${periodo.fim}.docx"`);

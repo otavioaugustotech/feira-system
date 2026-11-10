@@ -1,5 +1,5 @@
 import { useId, useRef, useState } from 'react';
-import { ImagePlus, Trash2, Upload } from 'lucide-react';
+import { ImagePlus, Link2, Trash2, Upload } from 'lucide-react';
 import Button from '../../components/ui/Button.jsx';
 import { validarArquivoImagem, prepararImagemProduto } from '../../utils/imagem.js';
 import './produtos.css';
@@ -42,6 +42,33 @@ export default function CampoImagemProduto({ valor, onAlterar, nomeProduto }) {
     if (arquivo) usarArquivo(arquivo);
   };
 
+  /* ⭐ Imagem por link (URL): confere se o endereço é https e se a imagem
+     realmente abre antes de usar. */
+  const [link, setLink] = useState('');
+  const [testandoLink, setTestandoLink] = useState(false);
+
+  const usarLink = () => {
+    const url = link.trim();
+    if (!/^https:\/\/[^\s"'<>]+$/i.test(url)) {
+      setErro('Cole um link de imagem que comece com https://');
+      return;
+    }
+    setErro('');
+    setTestandoLink(true);
+    const img = new Image();
+    img.referrerPolicy = 'no-referrer';
+    img.onload = () => {
+      setTestandoLink(false);
+      setLink('');
+      onAlterar(url);
+    };
+    img.onerror = () => {
+      setTestandoLink(false);
+      setErro('Não foi possível abrir a imagem desse link. Confira se é o endereço da própria imagem (termina em .jpg, .png, .webp...).');
+    };
+    img.src = url;
+  };
+
   const aoSoltar = (e) => {
     e.preventDefault();
     setArrastando(false);
@@ -64,7 +91,7 @@ export default function CampoImagemProduto({ valor, onAlterar, nomeProduto }) {
           aria-describedby={idDica}
         >
           {valor ? (
-            <img src={valor} alt={nomeProduto ? `Imagem de ${nomeProduto}` : 'Imagem do produto'} />
+            <img src={valor} alt={nomeProduto ? `Imagem de ${nomeProduto}` : 'Imagem do produto'} referrerPolicy="no-referrer" />
           ) : (
             <span className="campo-imagem-vazio">
               <ImagePlus size={28} aria-hidden="true" />
@@ -90,8 +117,35 @@ export default function CampoImagemProduto({ valor, onAlterar, nomeProduto }) {
             </Button>
           )}
           <p id={idDica} className="dica">
-            Opcional. JPG, PNG ou WEBP de até 10 MB. Você também pode arrastar a foto para o quadro.
+            Opcional. JPG, PNG ou WEBP de até 10 MB. Você também pode arrastar a foto para o quadro ou colar um link.
           </p>
+          <div className="campo-imagem-link">
+            <label htmlFor={`${idDica}-link`} className="sr-only">Link (URL) da imagem</label>
+            <input
+              id={`${idDica}-link`}
+              className="input"
+              type="url"
+              inputMode="url"
+              placeholder="Ou cole o link da imagem (https://...)"
+              value={link}
+              onChange={(e) => setLink(e.target.value)}
+              onKeyDown={(e) => {
+                /* Enter usa o link sem enviar o formulário do produto */
+                if (e.key === 'Enter') { e.preventDefault(); usarLink(); }
+              }}
+            />
+            <Button
+              type="button"
+              variante="secondary"
+              tamanho="sm"
+              icone={Link2}
+              onClick={usarLink}
+              carregando={testandoLink}
+              disabled={!link.trim()}
+            >
+              Usar link
+            </Button>
+          </div>
           {erro && <p className="erro-msg" role="alert">{erro}</p>}
         </div>
       </div>
@@ -113,7 +167,7 @@ export default function CampoImagemProduto({ valor, onAlterar, nomeProduto }) {
 export function MiniaturaProduto({ imagem, nome, tamanho = 44 }) {
   return (
     <span className="produto-miniatura" style={{ width: tamanho, height: tamanho }}>
-      {imagem ? <img src={imagem} alt="" /> : <span aria-hidden="true">{(nome || '?').trim().charAt(0).toUpperCase()}</span>}
+      {imagem ? <img src={imagem} alt="" referrerPolicy="no-referrer" loading="lazy" /> : <span aria-hidden="true">{(nome || '?').trim().charAt(0).toUpperCase()}</span>}
     </span>
   );
 }

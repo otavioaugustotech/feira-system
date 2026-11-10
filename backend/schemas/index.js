@@ -20,6 +20,14 @@ const cancelarVendaSchema = z.object({
   motivo: z.string().max(255).optional(),
 });
 
+/* ⭐ Imagem do produto: chega em base64 ("data:image/...") já reduzida no
+   navegador (320x320), ou null para remover a imagem. */
+const TAMANHO_MAX_IMAGEM_PRODUTO = 700 * 1024; /* ~700 KB de texto — sobra muito para 320x320 */
+const imagemBase64 = z
+  .string()
+  .regex(/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/, 'imagem em formato inválido')
+  .max(TAMANHO_MAX_IMAGEM_PRODUTO, 'imagem muito grande');
+
 const produtoSchema = z.object({
   nome: z.string().min(1, 'nome é obrigatório'),
   categoria: z.string().optional(),
@@ -28,6 +36,7 @@ const produtoSchema = z.object({
   preco_venda: z.number().nonnegative(),
   quantidade: z.number().nonnegative().optional().default(0),
   estoque_minimo: z.number().nonnegative().optional().default(5),
+  imagem: imagemBase64.nullable().optional(),
 });
 
 const desperdicioSchema = z.object({

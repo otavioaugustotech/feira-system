@@ -66,6 +66,21 @@
 .campo-imagem-acoes .erro-msg {
   margin: 0;
 }
+/* ⭐ Colar o link (URL) da imagem */
+.campo-imagem-link {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+  align-items: center;
+}
+.campo-imagem-link .input {
+  min-height: 40px;
+  padding-top: 0.45rem;
+  padding-bottom: 0.45rem;
+  font-size: 0.9rem;
+  flex: 1;
+  min-width: 0;
+}
 .campo-imagem-input {
   position: absolute;
   width: 1px;

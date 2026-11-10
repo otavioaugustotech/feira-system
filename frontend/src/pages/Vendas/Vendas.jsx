@@ -15,7 +15,7 @@ import { produtosService } from '../../services/produtosService.js';
 import { vendasService } from '../../services/vendasService.js';
 import { useToast } from '../../hooks/useToast.js';
 import { extrairMensagemErro } from '../../services/api.js';
-import { formatarMoeda, formatarQuantidade, formatarDataHora, rotuloFormaPagamento, rotuloStatusVenda } from '../../utils/formatters.js';
+import { formatarMoeda, formatarQuantidade, formatarDataHora, rotuloFormaPagamento, rotuloStatusVenda, rotuloTipoVenda } from '../../utils/formatters.js';
 import '../shared/list-page.css';
 import './vendas.css';
 
@@ -89,6 +89,7 @@ export default function Vendas() {
           nome: produtoAtual.nome,
           preco_venda: Number(produtoAtual.preco_venda),
           quantidade: Number(quantidade),
+          tipo_venda: produtoAtual.tipo_venda,
         },
       ]);
     }
@@ -179,13 +180,22 @@ export default function Vendas() {
                   </option>
                 ))}
               </Select>
+              {/* ⭐ Aceita unidades (1, 2, 3...) ou quilos com casas decimais (1,5 kg) */}
               <Input
-                label="Quantidade"
+                label="Quantidade / Quilo (kg)"
                 type="number"
                 min="0.001"
-                step="1"
+                step="any"
+                inputMode="decimal"
                 value={quantidade}
                 onChange={(e) => setQuantidade(e.target.value)}
+                dica={
+                  produtoAtual?.tipo_venda === 'kg'
+                    ? 'Em quilos. Ex.: 1,5 = um quilo e meio.'
+                    : produtoAtual
+                      ? `Vendido por ${rotuloTipoVenda(produtoAtual.tipo_venda).toLowerCase()}.`
+                      : 'Unidades ou quilos (ex.: 1,5 kg).'
+                }
               />
               <Button icone={Plus} onClick={adicionarAoCarrinho} disabled={!produtoSelecionado}>
                 Adicionar
@@ -197,7 +207,7 @@ export default function Vendas() {
                 <ul className="carrinho-lista" aria-label="Itens da venda atual">
                   {carrinho.map((i) => (
                     <li className="carrinho-item" key={i.produto_id}>
-                      <span>{i.nome} × {i.quantidade}</span>
+                      <span>{i.nome} × {formatarQuantidade(i.quantidade)}{i.tipo_venda === 'kg' ? ' kg' : ''}</span>
                       <span style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <strong>{formatarMoeda(i.preco_venda * i.quantidade)}</strong>
                         <Button

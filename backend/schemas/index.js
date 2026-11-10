@@ -23,10 +23,20 @@ const cancelarVendaSchema = z.object({
 /* ⭐ Imagem do produto: chega em base64 ("data:image/...") já reduzida no
    navegador (320x320), ou null para remover a imagem. */
 const TAMANHO_MAX_IMAGEM_PRODUTO = 700 * 1024; /* ~700 KB de texto — sobra muito para 320x320 */
-const imagemBase64 = z
+const imagemArquivo = z
   .string()
   .regex(/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/, 'imagem em formato inválido')
   .max(TAMANHO_MAX_IMAGEM_PRODUTO, 'imagem muito grande');
+/* ⭐ Ou um link (URL) de imagem da internet. Só https (site seguro), sem
+   espaços nem aspas, até 2.000 caracteres. */
+const imagemLink = z
+  .string()
+  .trim()
+  .max(2000, 'link da imagem muito longo')
+  .regex(/^https:\/\/[^\s"'<>]+$/i, 'link da imagem inválido (use um endereço que comece com https://)');
+const imagemBase64 = z.union([imagemArquivo, imagemLink], {
+  errorMap: () => ({ message: 'imagem inválida: envie uma foto (JPG, PNG ou WEBP) ou um link https://' }),
+});
 
 const produtoSchema = z.object({
   nome: z.string().min(1, 'nome é obrigatório'),

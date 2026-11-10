@@ -2,11 +2,19 @@
   display: grid;
   grid-template-columns: 2fr 1fr auto;
   gap: 0.75rem;
-  align-items: flex-end;
+  /* alinhado pelo topo: a dica embaixo da quantidade não desalinha os campos */
+  align-items: start;
+}
+/* o botão desce a altura do rótulo, para ficar na linha dos campos */
+.venda-form-grid > .btn {
+  margin-top: calc(0.9rem * 1.5 + 0.35rem);
 }
 @media (max-width: 640px) {
   .venda-form-grid {
     grid-template-columns: 1fr;
+  }
+  .venda-form-grid > .btn {
+    margin-top: 0;
   }
 }
 .carrinho-lista {
